@@ -5,7 +5,7 @@ from scrapy.http import HtmlResponse
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 
-from amazon_scrapy_spider.selenium_utils import webdriver_get, scrol_to_buttom, change_en, \
+from amozon_scrapy_spider.selenium_utils import webdriver_get, scrol_to_buttom, change_en, \
     get_right_category_urls, create_proxy_chrome
 
 

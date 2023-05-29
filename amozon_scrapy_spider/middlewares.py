@@ -6,7 +6,7 @@
 # useful for handling different item types with a single interface
 from scrapy.http import HtmlResponse
 
-from amazon_scrapy_spider.selenium_utils import webdriver_get, create_proxy_chrome
+from amozon_scrapy_spider.selenium_utils import webdriver_get, create_proxy_chrome
 
 
 class MyMiddleware(object):

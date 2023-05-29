@@ -5,10 +5,10 @@ import scrapy
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from amazon_scrapy_spider.cus_request import SeleniumRequest, RightTabRequest
-from amazon_scrapy_spider.items import Item, Category, TreeLevel
-from amazon_scrapy_spider.selenium_utils import get_base_url, webdriver_get
-from amazon_scrapy_spider.selenium_utils import scrol_to_buttom, get_this_level_item_urls
+from amozon_scrapy_spider.cus_request import SeleniumRequest, RightTabRequest
+from amozon_scrapy_spider.items import Item, Category, TreeLevel
+from amozon_scrapy_spider.selenium_utils import get_base_url, webdriver_get
+from amozon_scrapy_spider.selenium_utils import scrol_to_buttom, get_this_level_item_urls
 
 
 class AmozonSpiderSpider(scrapy.Spider):
