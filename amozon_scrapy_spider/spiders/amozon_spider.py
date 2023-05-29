@@ -34,11 +34,11 @@ class AmozonSpiderSpider(scrapy.Spider):
         "LOG_LEVEL": "ERROR",
 
         # 禁用并发请求
-        "CONCURRENT_REQUESTS": 1,
-        "CONCURRENT_REQUESTS_PER_DOMAIN": 1,
+        # "CONCURRENT_REQUESTS": 1,  # 默认多少并发，忘记了，直接启动把
+        # "CONCURRENT_REQUESTS_PER_DOMAIN": 1,
 
         # 设置请求延迟时间为1秒
-        "DOWNLOAD_DELAY": 1,
+        "DOWNLOAD_DELAY": 0.5,
 
         # 设置下载超时时间为3秒
         "DOWNLOAD_TIMEOUT": 3,
@@ -74,9 +74,6 @@ class AmozonSpiderSpider(scrapy.Spider):
     # def parse_category1_items(self, driver, meta):  # 详情页一级
     def parse_category1_items(self, response):  # 详情页一级
         driver = response.meta.get("driver")
-        print("搞笑？")
-        print("meta", response.meta)
-        print("meta2", response.request.meta)
         this_page_items = []
         try:
             next_page_elm = driver.find_element(By.XPATH, '//div[@role="navigation"]/ul/li[@class="a-last"]')
@@ -86,7 +83,7 @@ class AmozonSpiderSpider(scrapy.Spider):
             next_page_class_attr = ""
             next_page_elm = None
 
-        scrol_to_buttom(driver, 1)
+        scrol_to_buttom(driver, 2)
         this_page_items += get_this_level_item_urls(driver)
 
         # print(len(this_page_items))
@@ -98,7 +95,7 @@ class AmozonSpiderSpider(scrapy.Spider):
             # print("有下一页", next_page_url)
             driver = webdriver_get(driver, next_page_url)
             change_en(driver)
-            scrol_to_buttom(driver, 1)
+            scrol_to_buttom(driver, 2)
             try:
                 next_page_elm = driver.find_element(By.XPATH, '//div[@role="navigation"]/ul/li[@class="a-last"]')
                 next_page_class_attr = next_page_elm.get_attribute("class")

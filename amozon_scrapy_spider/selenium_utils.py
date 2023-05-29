@@ -66,8 +66,8 @@ def scrol_to_buttom(driver, wait_time=1):
     last_height = driver.execute_script('return document.body.scrollHeight')
     while True:
         # 执行JavaScript，对页面进行滚动
-        driver.execute_script('window.scrollTo(0, document.body.scrollHeight + 550);')
-        # driver.execute_script("window.scrollBy(0, -500);")
+        driver.execute_script('window.scrollTo(0, document.body.scrollHeight - 550);')
+        # driver.execute_script("window.scrollBy(0, -550);")
 
         # 等待页面加载完成
         time.sleep(wait_time)  # 强心等了一秒（等待把东西加载出来）
