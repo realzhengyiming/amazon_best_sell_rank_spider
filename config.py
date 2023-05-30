@@ -7,7 +7,7 @@ PROXY_PORT = os.environ.get("PROXY_PORT")
 PROJECT_ROOT = os.path.dirname(__file__)
 
 # debug 用
-HEADLESS_MODE = bool(os.environ.get("HEADLESS_MODE", True))
+HEADLESS_MODE = bool(os.environ.get("HEADLESS_MODE", False))
 IMAGE_MODE = bool(os.environ.get("HEADLESS_MODE", False))
 
 # 可选，记录错误

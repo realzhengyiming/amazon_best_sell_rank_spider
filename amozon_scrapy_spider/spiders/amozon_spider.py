@@ -72,7 +72,7 @@ class AmozonSpiderSpider(scrapy.Spider):
             for category, url in category_url:
                 file.write(f"{category};{url}")
 
-        for category, url in category_url:  # 只测一个主题
+        for category, url in category_url[:1]:  # 只测一个主题
             print("category, url", category, url)
             yield scrapy.Request(url=url, callback=self.parse_category1_items, meta={'url': url, "category": category,
                                                                                      "level": 1})
@@ -140,19 +140,21 @@ class AmozonSpiderSpider(scrapy.Spider):
             category = asdict(category)
             item['belongs_category'] = category
             item['first_level'] = category
-            print("item", item)
-            yield item
+            # print("item", item)
+            # yield item
             write_item_to_redis(url, text)
 
         # 末尾进行二级的获得与遍历
         # 提取一下二级的  # 然后提取一下三级的，依次递归了，然后我需要优先深度遍历，这样好一些？
+
         if level != 3:  # 第三级，最后一级了
             # 获得右侧 category_url
-            category_url_list = get_right_category_urls(driver)
-            for category, url in category_url_list:  # 只测一个主题
+            category_url_list = get_right_category_urls(driver)  # 没有就不用下一级了
+            print("level:", level, len(category_url_list))
+            for category, url in category_url_list:  # 只测一个主题 todo 没有递归，此处，这是为什么。
                 print("category, url", category, url)
                 yield scrapy.Request(url=url, callback=self.parse_category1_items,
                                      meta={'url': url, "category": category,
                                            "level": level + 1})
 
-        driver.quit()  # 最后才关闭
+        # driver.quit()  # 最后才关闭

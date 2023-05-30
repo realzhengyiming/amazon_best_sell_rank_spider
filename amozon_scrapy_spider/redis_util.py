@@ -30,7 +30,7 @@ def write_item_to_redis(item_url, item_name, table_name=ITEM_URLS):
     r = redis.Redis(connection_pool=redis_pool)
     # 将错误信息推入 Redis 列表
     r.hset(table_name, item_url, item_name)  # 不够的要补1李爱
-    print("log ", table_name, item_url, item_name)
+    # print("log ", table_name, item_url, item_name)
 
 
 def get_redis_hash(category_keys=CRAWLED_CATEGORY_KEYS) -> Dict:
