@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 from selenium import webdriver
 from selenium.common import NoSuchElementException
+from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from seleniumwire import webdriver as wire_webdriver  # pip install selenium-wire
@@ -15,6 +16,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 # 改成一个对象来封装也挺好的
 from webdriver_manager.firefox import GeckoDriverManager
 
+from amozon_scrapy_spider.redis_util import hexists
 from config import PROXY_USER, PROXY_PASSWORD, PROXY_PORT, PROXY_HOST, HEADLESS_MODE, IMAGE_MODE, PROJECT_ROOT
 
 # 创建Chrome浏览器对象
@@ -22,7 +24,7 @@ from config import PROXY_USER, PROXY_PASSWORD, PROXY_PORT, PROXY_HOST, HEADLESS_
 RETRY_TIME = 4
 
 
-def webdriver_get(driver, url, retry_time=4, wait_time=5):
+def webdriver_get(driver, url, retry_time=10, wait_time=5):
     html_content = '<html><head><meta name="color-scheme" content="light dark"></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;">Request was throttled. Please wait a moment and refresh the page</pre></body></html>'
     # 打开网页
     # driver.implicitly_wait(wait_time)  # 设置等待时间为10秒
@@ -34,7 +36,7 @@ def webdriver_get(driver, url, retry_time=4, wait_time=5):
             time.sleep(0.1)
         else:
             return driver
-    print("重试多次后还是失败了！")
+    print("重试多次后还是失败了！")  # 会有问题，一级分类已经搞定
     return driver
 
 
@@ -62,23 +64,42 @@ def change_en(driver):
     return driver
 
 
-def scrol_to_buttom(driver, wait_time=1):
-    last_height = driver.execute_script('return document.body.scrollHeight')
+# def scroll_to_buttom(driver, wait_time=1):
+#     last_height = driver.execute_script('return document.body.scrollHeight')
+#     while True:
+#         # 执行JavaScript，对页面进行滚动
+#         driver.execute_script('window.scrollTo(0, document.body.scrollHeight - 1000);')
+#         # driver.execute_script("window.scrollBy(0, -550);")
+#
+#         # 等待页面加载完成
+#         time.sleep(wait_time)  # 强心等了一秒（等待把东西加载出来）
+#         # 判断是否还有可以滚动的内容
+#         new_height = driver.execute_script('return document.body.scrollHeight')
+#
+#         if new_height == last_height:
+#             break
+#         else:
+#             last_height = new_height
+#     print("已经滚动完了所有内容")
+
+def scroll_to_buttom(driver, wait_time=1):  # 滚动到底下刷新出来，展开最大的情况，全屏
+    old_height = driver.execute_script('return document.body.scrollHeight')
     while True:
-        # 执行JavaScript，对页面进行滚动
-        driver.execute_script('window.scrollTo(0, document.body.scrollHeight - 550);')
-        # driver.execute_script("window.scrollBy(0, -550);")
-
-        # 等待页面加载完成
-        time.sleep(wait_time)  # 强心等了一秒（等待把东西加载出来）
-        # 判断是否还有可以滚动的内容
+        target_element = driver.find_element(By.XPATH, '//*[@id="navBackToTop"]/div')
+        # 创建 ActionChains 对象
+        actions = ActionChains(driver)
+        # 将鼠标移动到目标元素上
+        actions.move_to_element(target_element)
+        # 对目标元素进行微调
+        actions.move_by_offset(0, -200)
+        # 执行操作
+        actions.pause(wait_time)
+        actions.perform()
         new_height = driver.execute_script('return document.body.scrollHeight')
-
-        if new_height == last_height:
-            break
+        if old_height != new_height:
+            old_height = new_height
         else:
-            last_height = new_height
-    print("已经滚动完了所有内容")
+            break
 
 
 def get_right_category_urls(driver) -> List[List]:  # category_name, url
@@ -267,7 +288,8 @@ def pickle_cookie(driver):
 
 
 def load_pickled_cookie(driver):
-    driver.add_cookie({'domain': '.amazon.com', 'expiry': 1716907356, 'httpOnly': False, 'name': 'lc-main', 'path': '/', 'secure': False, 'value': 'en_US'})
+    driver.add_cookie({'domain': '.amazon.com', 'expiry': 1716907356, 'httpOnly': False, 'name': 'lc-main', 'path': '/',
+                       'secure': False, 'value': 'en_US'})
 
     # path = os.path.join(PROJECT_ROOT, "cache", "cookie.pkl")
     # with open(path, 'rb') as f:
@@ -275,6 +297,12 @@ def load_pickled_cookie(driver):
     #     for cookie in cookies:
     #         driver.add_cookie(cookie)
     return driver
+
+
+def filter_url(url):
+    if hexists(url):
+        return True
+    return False
 
 
 if __name__ == '__main__':

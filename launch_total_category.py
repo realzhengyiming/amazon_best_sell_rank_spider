@@ -6,7 +6,7 @@ from scrapy import cmdline
 # cmdline.execute('scrapy crawl amozon'.split())
 
 start = time.time()
-cmdline.execute('scrapy crawl amozon -o output/category1.csv -t csv'.split())
+cmdline.execute('scrapy crawl amozon -o output/total_category_items.csv'.split())
 print(time.time() - start)
 
 # todo 英语的状态，如何永远设置这个呢

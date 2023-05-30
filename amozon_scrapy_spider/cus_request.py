@@ -6,7 +6,7 @@ from typing import List
 # from selenium import webdriver
 # from webdriver_manager.chrome import ChromeDriverManager
 
-from amozon_scrapy_spider.selenium_utils import webdriver_get, scrol_to_buttom, change_en, \
+from amozon_scrapy_spider.selenium_utils import webdriver_get, scroll_to_buttom, change_en, \
     get_right_category_urls, create_wire_proxy_chrome, pickle_cookie
 
 # 单纯打开重启的时候可以用这个
@@ -61,12 +61,10 @@ class RightTabRequest:
         # category_name, url:  # 默认不管
         self.driver = webdriver_get(self.driver, self.url)
         if slide_bottom:
-            scrol_to_buttom(self.driver)
+            scroll_to_buttom(self.driver)
 
         if change_en_language:
             change_en(self.driver)
-
-        pickle_cookie(self.driver)  # 保存切换了语言后的pickle到某处
         # 获取页面内容
         time.sleep(1)  # 等待页面渲染出来
         category_url_list = get_right_category_urls(self.driver)
