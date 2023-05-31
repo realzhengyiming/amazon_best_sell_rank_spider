@@ -2,7 +2,7 @@
 # encoding: utf-8
 import time
 
-from amozon_scrapy_spider.selenium_utils import create_wire_proxy_firefox
+from amazon_scrapy_spider.selenium_utils import create_wire_proxy_firefox
 
 if __name__ == '__main__':
     start = time.time()

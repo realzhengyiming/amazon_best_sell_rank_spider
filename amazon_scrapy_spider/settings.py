@@ -7,14 +7,14 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = "amozon_scrapy_spider"
+BOT_NAME = "amazon_scrapy_spider"
 
-SPIDER_MODULES = ["amozon_scrapy_spider.spiders"]
-NEWSPIDER_MODULE = "amozon_scrapy_spider.spiders"
+SPIDER_MODULES = ["amazon_scrapy_spider.spiders"]
+NEWSPIDER_MODULE = "amazon_scrapy_spider.spiders"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = "amozon_scrapy_spider (+http://www.yourdomain.com)"
+#USER_AGENT = "amazon_scrapy_spider (+http://www.yourdomain.com)"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
@@ -45,13 +45,13 @@ ROBOTSTXT_OBEY = False
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
-#    "amozon_scrapy_spider.middlewares.AmazonScrapySpiderSpiderMiddleware": 543,
+#    "amazon_scrapy_spider.middlewares.AmazonScrapySpiderSpiderMiddleware": 543,
 #}
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #DOWNLOADER_MIDDLEWARES = {
-#    "amozon_scrapy_spider.middlewares.AmazonScrapySpiderDownloaderMiddleware": 543,
+#    "amazon_scrapy_spider.middlewares.AmazonScrapySpiderDownloaderMiddleware": 543,
 #}
 
 # Enable or disable extensions
@@ -63,7 +63,7 @@ ROBOTSTXT_OBEY = False
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 #ITEM_PIPELINES = {
-#    "amozon_scrapy_spider.pipelines.AmazonScrapySpiderPipeline": 300,
+#    "amazon_scrapy_spider.pipelines.AmazonScrapySpiderPipeline": 300,
 #}
 
 # Enable and configure the AutoThrottle extension (disabled by default)

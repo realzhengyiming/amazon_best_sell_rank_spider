@@ -2,7 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
-from amozon_scrapy_spider.selenium_utils import webdriver_get
+from amazon_scrapy_spider.selenium_utils import webdriver_get
 
 if __name__ == '__main__':
     # selenium 启动浏览器，然后解析网页
@@ -12,5 +12,5 @@ if __name__ == '__main__':
     driver = webdriver_get(driver, url)  # 如果多次都打开网页失败，那就是ip被封了，关掉代理用本地默认ip 刷新就可以
     element = driver.find_elements(By.XPATH, "xpath selector")  # 提取元素例子
 
-    # 元素的对象还没取好，可参考 amozon_scrapy_spider/amozon_scrapy_spider/items.py
+    # 元素的对象还没取好，可参考 amazon_scrapy_spider/amazon_scrapy_spider/items.py
     # 最后再整理起来就可以了

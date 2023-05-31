@@ -2,11 +2,11 @@ import time
 
 from scrapy import cmdline
 
-# cmdline.execute('scrapy crawl amozon -o test.csv -t csv'.split())
-# cmdline.execute('scrapy crawl amozon'.split())
+# cmdline.execute('scrapy crawl amazon -o test.csv -t csv'.split())
+# cmdline.execute('scrapy crawl amazon'.split())
 
 start = time.time()
-cmdline.execute('scrapy crawl amozon -o output/total_category_items.csv'.split())
+cmdline.execute('scrapy crawl amazon'.split())
 print(time.time() - start)
 
 # todo 英语的状态，如何永远设置这个呢

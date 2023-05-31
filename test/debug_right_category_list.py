@@ -2,14 +2,13 @@
 # encoding: utf-8
 import time
 
-from amozon_scrapy_spider.selenium_utils import create_wire_proxy_chrome, webdriver_get, get_right_category_urls, \
-    change_en
+from amazon_scrapy_spider.selenium_utils import create_wire_proxy_chrome, webdriver_get, get_right_category_urls
 
 if __name__ == '__main__':
     start = time.time()
     driver = create_wire_proxy_chrome(headless=False, image_mode=True)
-    driver = webdriver_get(driver, 'https://www.amazon.com/Best-Sellers-Amazon-Devices-Accessories-Amazon-Device-Accessories/zgbs/amazon-devices/370783011/ref=zg_bs_nav_amazon-devices_1')
-    change_en(driver)
+    driver = webdriver_get(driver,
+                           'https://www.amazon.com/Best-Sellers-Amazon-Devices-Accessories-Amazon-Device-Accessories/zgbs/amazon-devices/370783011/ref=zg_bs_nav_amazon-devices_1')
     category_url_list = get_right_category_urls(driver)
     print(len(category_url_list))
 

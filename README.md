@@ -1,4 +1,4 @@
-# amozon scrapy spider
+# amazon scrapy spider
 
 # required
 pip install -r requirements.txt
@@ -7,4 +7,4 @@ pip install -r requirements.txt
 python launch.py
 
 or bash
-scrapy crawl amozon
+scrapy crawl amazon

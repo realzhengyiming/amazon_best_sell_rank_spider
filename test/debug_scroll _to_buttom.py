@@ -2,7 +2,7 @@
 # encoding: utf-8
 import time
 
-from amozon_scrapy_spider.selenium_utils import create_wire_proxy_chrome, webdriver_get, scroll_to_buttom
+from amazon_scrapy_spider.selenium_utils import create_wire_proxy_chrome, webdriver_get, scroll_to_buttom
 
 if __name__ == '__main__':
     start = time.time()

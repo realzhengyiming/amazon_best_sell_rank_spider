@@ -6,7 +6,7 @@ from typing import List
 # from selenium import webdriver
 # from webdriver_manager.chrome import ChromeDriverManager
 
-from amozon_scrapy_spider.selenium_utils import webdriver_get, scroll_to_buttom, change_en, \
+from amazon_scrapy_spider.selenium_utils import webdriver_get, scroll_to_buttom, \
     get_right_category_urls, create_wire_proxy_chrome, pickle_cookie
 
 # 单纯打开重启的时候可以用这个
@@ -63,8 +63,6 @@ class RightTabRequest:
         if slide_bottom:
             scroll_to_buttom(self.driver)
 
-        if change_en_language:
-            change_en(self.driver)
         # 获取页面内容
         time.sleep(1)  # 等待页面渲染出来
         category_url_list = get_right_category_urls(self.driver)

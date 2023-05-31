@@ -12,8 +12,8 @@ IMAGE_MODE = bool(os.environ.get("HEADLESS_MODE", False))
 
 # 可选，记录错误
 ERROR_KEYS = os.environ.get("ERROR_KEYS", "scrapy_error_urls")
-CRAWLED_CATEGORY_KEYS = os.environ.get("CRAWLED_KEYS", "crawled_category_info")
-ITEM_URLS = "ITEM_URL"
+CRAWLED_CATEGORY_KEYS = os.environ.get("CRAWLED_CATEGORY_KEYS", "crawled_category_info")
+CRAWLED_ITEM_KEYS = os.environ.get("CRAWLED_ITEM_KEYS", "crawled_item_info")
 
 print("-------config 配置:-------")
 local_vars = {}

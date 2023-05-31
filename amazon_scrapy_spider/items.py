@@ -23,7 +23,7 @@ class Category:
     tree_level: TreeLevel  # 这个类所在层级
 
     def __str__(self):
-        return f"{self.name}:{self.tree_level}"
+        return f"{self.name}_level:{self.tree_level.value}"
 
 
 # @dataclass
@@ -37,11 +37,12 @@ class Item(scrapy.Item):
     third_level = scrapy.Field()  # third_level: Category = None  # 第三级（可以没有）
 
     def __str__(self):
-        # return
-        pass
-        # return f"{self['bsr']}:{self['title']}:{self['belongs_category']}"
+        return f"{self['bsr']}:{self['title']}:{self['belongs_category']}"
+
 
 # class AmazonScrapySpiderItem(scrapy.Item):
 #     # define the fields for your item here like:
 #     # name = scrapy.Field()
 #     pass
+if __name__ == '__main__':
+    print(Category("helloo", TreeLevel.FirstLevel))
