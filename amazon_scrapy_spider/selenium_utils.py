@@ -47,7 +47,9 @@ def get_base_url(url):
 def scroll_to_buttom(driver, wait_time=1):  # 滚动到底下刷新出来，展开最大的情况，全屏
     old_height = driver.execute_script('return document.body.scrollHeight')
     while True:
-        target_element = driver.find_element(By.XPATH, '//*[@id="navBackToTop"]/div')
+        # target_element = driver.find_element(By.XPATH, '//*[@id="navBackToTop"]/div')
+        target_element = driver.find_element(By.XPATH, '//*[@id="CardInstancekSYLoSe5-V8mF_nf0bSK6g"]/div/div/a/span')
+        #
         # 创建 ActionChains 对象
         actions = ActionChains(driver)
         # 将鼠标移动到目标元素上

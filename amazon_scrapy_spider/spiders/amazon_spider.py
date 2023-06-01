@@ -133,9 +133,40 @@ class amazonSpiderSpider(scrapy.Spider):
     def parse_category_content(self, response):  # category 页面 提取item；翻页category
         level = response.meta.get("level")
         if level != 0:  # 种子，第一个bsr 页面，不提取item
-            self.category_items(response)
+            xpath = '//*[@id="gridItemRoot"]/div/div[2]/div/a[2]'  # 获取了图片部份的url
+            a_tags = Selector(response).xpath(xpath)
+            item_urls = [[a.xpath(".//text()").get(), a.xpath("@href").extract_first()] for a in a_tags]
+            for index, (text, url) in enumerate(item_urls):
+                item = Item()
+                item['title'] = text
+                item['bsr'] = index + 1
+                item['url'] = url
+                category = Category(name=response.meta.get("category"), level=Level.FirstLevel)
+                category = asdict(category)
+                item['belongs_category'] = category
+                item['first_level'] = category
+                yield item
+            # self.category_items(response)
 
-        self.category_next_page(response)
+        # self.category_next_page(response)
+        meta = response.meat
+        # 下一页，next page 有这个直接就可以了
+        next_page_url_xpath = '//div[@role="navigation"]/ul/li[@class="a-last"]/a/@href'
+        suffix_page_url = Selector(response).xpath(next_page_url_xpath).extract_first()
+        if suffix_page_url is not None:
+            next_page_url = urljoin(self.base_url, suffix_page_url)
+            meta['url'] = next_page_url
+            yield scrapy.Request(url=next_page_url, callback=self.parse_category_content, meta=meta, dont_filter=True)
 
-        self.subcategory_extract(response)  # 抓取下一级category
-
+        # self.subcategory_extract(response)  # 抓取下一级category
+        level = response.meta.get("level")
+        if level != 3:  # 第三级，最后一级了
+            category_url_list = self._right_sub_category_extract(response)  # 没有就不用下一级了
+            if len(category_url_list) != 0:
+                print("level:", level, len(category_url_list))
+                for category, url in category_url_list:  # 只测一个主题 todo 没有递归，此处，这是为什么。
+                    print("category, url", category, url)
+                    yield scrapy.Request(url=url, callback=self.parse_category_content,
+                                         meta={'url': url, "category": category,
+                                               "level": level + 1, "request_type": RequestType.CategoryRequest},
+                                         dont_filter=True)

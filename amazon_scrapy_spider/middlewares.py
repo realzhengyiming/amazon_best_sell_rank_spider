@@ -24,15 +24,19 @@ class WebMiddleware(object):
             write_error_to_redis(json.dumps({"url": response.request.url, "level": response.meta.get("level"),
                                              "category": response.request.meta.get("category")}))
         # 在收到响应后对响应进行处理
+            print(response.status)
+            return request.replace(dont_filter=True)  # 重新发起请求
         elif response.status == 403:
             # 如果返回状态码为403，则重新发送该请求
+            "Type the characters you see in this image:"
+            print(response.status)
             return request.replace(dont_filter=True)
         elif response.status == 429:
             print(response.text)
             print("代理是不是没钱了")
             write_error_to_redis(json.dumps({"url": response.request.url, "level": response.meta.get("level"),
                                              "category": response.request.meta.get("category")}))
-            # return request.replace(dont_filter=True)
+            return request.replace(dont_filter=True)
         else:
             return response
 
@@ -49,7 +53,7 @@ class ChromeMiddleware(WebMiddleware):
             driver = webdriver_get(driver, request.url, wait_time=0.1)
 
             # category 类型就附带完整的滚动
-            driver = scroll_full_page(driver)
+            driver = scroll_full_page(driver)  # todo 此处也有丢失的问题
             body = driver.page_source
             url = driver.current_url
             driver.quit()
