@@ -1,6 +1,7 @@
 import csv
 import os
 
+from amazon_scrapy_spider.items import Item
 from amazon_scrapy_spider.redis_util import write_item_to_redis, hexists
 from config import CRAWLED_ITEM_KEYS
 
@@ -31,14 +32,15 @@ class CsvFilePipeline:
         self.tmp_file.close()
 
     def process_item(self, item, spider):
-        url = item.get("url")
-        bsr = item.get("bsr")
-        belongs_category = item.get("belongs_category")
-        item_name = item.get("title")
-        unique_code = f"{url}|{belongs_category.get('tree_level')}|{bsr}"
+        if isinstance(item, Item):
+            url = item.get("url")
+            bsr = item.get("bsr")
+            belongs_category = item.get("belongs_category")
+            item_name = item.get("title")
+            unique_code = f"{url}|{belongs_category.get('tree_level')}|{bsr}"
 
-        if not hexists(unique_code, CRAWLED_ITEM_KEYS):  # 写入过的不再写入
-            self.csv_writer.writerows([[str(s) for s in item.values()]])
-            write_item_to_redis(unique_code, item_name)
+            if not hexists(unique_code, CRAWLED_ITEM_KEYS):  # 写入过的不再写入
+                self.csv_writer.writerows([[str(s) for s in item.values()]])
+                write_item_to_redis(unique_code, item_name)
 
-        return item
+            return item

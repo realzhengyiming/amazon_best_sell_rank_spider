@@ -22,7 +22,7 @@ from config import PROXY_USER, PROXY_PASSWORD, PROXY_PORT, PROXY_HOST, HEADLESS_
 RETRY_TIME = 4
 
 
-def webdriver_get(driver, url, retry_time=10, wait_time=0.1):
+def webdriver_get(driver, url, retry_time=5, wait_time=0.1):
     html_content = '<html><head><meta name="color-scheme" content="light dark"></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;">Request was throttled. Please wait a moment and refresh the page</pre></body></html>'
     # 打开网页
     # driver.implicitly_wait(wait_time)  # 设置等待时间为10秒
@@ -62,6 +62,30 @@ def scroll_to_buttom(driver, wait_time=1):  # 滚动到底下刷新出来，展�
             old_height = new_height
         else:
             break
+
+
+def scroll_full_page(driver, scroll_wait_time: int = 2):
+    # """category 动态加载页面，确保完整加载出页面的所有item"""
+    # try:
+    #     next_page_elm = driver.find_element(By.XPATH, '//div[@role="navigation"]/ul/li[@class="a-last"]')
+    #     next_page_class_attr = next_page_elm.get_attribute("class")
+    # except NoSuchElementException:
+    #     next_page_class_attr = ""
+    #     next_page_elm = None
+
+    scroll_to_buttom(driver, scroll_wait_time)
+    # # 翻页模块
+    # while next_page_class_attr == "a-last" and next_page_elm is not None:
+    #     scroll_to_buttom(driver, scroll_wait_time)
+    #     try:
+    #         next_page_elm = driver.find_element(By.XPATH, '//div[@role="navigation"]/ul/li[@class="a-last"]')
+    #         next_page_class_attr = next_page_elm.get_attribute("class")
+    #         # 更新下一页的标签
+    #     except NoSuchElementException:
+    #         next_page_class_attr = ""
+    # # this_page_items = get_this_level_item_urls(driver)  # 全部翻完了才可以用
+    # # return this_page_items
+    return driver
 
 
 def get_right_category_urls(driver) -> List[List]:  # category_name, url
@@ -213,17 +237,15 @@ def create_wire_proxy_chrome(headless=HEADLESS_MODE, image_mode=IMAGE_MODE):
         options2.add_experimental_option("prefs", prefs)  # 设置无图模式
 
     if PROXY_USER and PROXY_PASSWORD and PROXY_PORT and PROXY_HOST:
-        proxy_dict = {
+        proxy_dict = {"proxy": {
             'http': f'http://{PROXY_USER}:{PROXY_PASSWORD}@{PROXY_HOST}:{PROXY_PORT}',
             'https': f'http://{PROXY_USER}:{PROXY_PASSWORD}@{PROXY_HOST}:{PROXY_PORT}',
-        }
+        }}
         options.update(proxy_dict)
 
     driver = wire_webdriver.Chrome(seleniumwire_options=options, executable_path=ChromeDriverManager().install(),
                                    options=options2)
-
-    driver.header_overrides = {
-        'Accept-Language': 'en-US,en;q=0.9'}  # 设置接收英语
+    driver.header_overrides = {'Accept-Language': 'en-US,en;q=0.9'}  # 设置接收英语
     return driver
 
 
@@ -233,10 +255,10 @@ def create_wire_proxy_firefox(headless=HEADLESS_MODE):
     }
 
     if PROXY_USER and PROXY_PASSWORD and PROXY_PORT and PROXY_HOST:
-        proxy_dict = {
+        proxy_dict = {"proxy": {
             'http': f'http://{PROXY_USER}:{PROXY_PASSWORD}@{PROXY_HOST}:{PROXY_PORT}',
             'https': f'http://{PROXY_USER}:{PROXY_PASSWORD}@{PROXY_HOST}:{PROXY_PORT}',
-        }
+        }}
         options.update(proxy_dict)
 
     options2 = FirefoxOptions()
@@ -255,22 +277,15 @@ def pickle_cookie(driver):
         pickle.dump(cookies, f)
 
 
-def load_pickled_cookie(driver):
+def set_en_language_cookie(driver):
     driver.add_cookie({'domain': '.amazon.com', 'expiry': 1716907356, 'httpOnly': False, 'name': 'lc-main', 'path': '/',
                        'secure': False, 'value': 'en_US'})
-
-    # path = os.path.join(PROJECT_ROOT, "cache", "cookie.pkl")
-    # with open(path, 'rb') as f:
-    #     cookies = pickle.load(f)
-    #     for cookie in cookies:
-    #         driver.add_cookie(cookie)
     return driver
 
-
-def filter_url(url):
-    if hexists(url):
-        return True
-    return False
+# def filter_url(url):
+#     if hexists(url, category_keys):
+#         return True
+#     return False
 
 
 if __name__ == '__main__':
@@ -287,3 +302,4 @@ if __name__ == '__main__':
     url = "https://www.amazon.com/Best-Sellers/zgbs/"
     base_url = get_base_url(url)
     driver = webdriver_get(driver, url)
+

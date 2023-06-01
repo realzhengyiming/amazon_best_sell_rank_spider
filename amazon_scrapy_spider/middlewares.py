@@ -8,8 +8,10 @@ import json
 
 from scrapy.http import HtmlResponse
 
-from amazon_scrapy_spider.redis_util import write_error_to_redis, write_category_item_number_to_redis
-from amazon_scrapy_spider.selenium_utils import webdriver_get, create_wire_proxy_chrome, create_wire_proxy_firefox
+from amazon_scrapy_spider.items import RequestType
+from amazon_scrapy_spider.redis_util import write_error_to_redis
+from amazon_scrapy_spider.selenium_utils import webdriver_get, create_wire_proxy_chrome, create_wire_proxy_firefox, \
+    scroll_full_page
 
 
 class WebMiddleware(object):
@@ -41,13 +43,20 @@ class ChromeMiddleware(WebMiddleware):
         # 在发送请求前对请求进行处理
         request.headers[
             'User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-        if spider.name == 'amazon':  # 发起一个新的请求
+
+        if request.meta.get("request_type") is RequestType.CategoryRequest:
             driver = create_wire_proxy_chrome()
             driver = webdriver_get(driver, request.url, wait_time=0.1)
+
+            # category 类型就附带完整的滚动
+            driver = scroll_full_page(driver)
             body = driver.page_source
-            response = HtmlResponse(driver.current_url, body=body, encoding='utf-8', request=request)
-            response.meta.update({"driver": driver})  # driver 都带过去了，item结束后要把driver quit掉才可以
+            url = driver.current_url
+            driver.quit()
+            response = HtmlResponse(url, body=body, encoding='utf-8', request=request)
             return response
+        elif request.meta.get("request_type") is RequestType.ItemRequest:
+            pass  # todo 后面支持的类型 item 类型使用代理就可以了
 
 
 class FirfoxMiddleware(object):

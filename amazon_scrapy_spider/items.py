@@ -9,7 +9,7 @@ from enum import Enum
 import scrapy
 
 
-class TreeLevel(Enum):
+class Level(Enum):
     ZeroLevel = 0  # 首页为0级 url = "https://www.amazon.com/Best-Sellers/zgbs/"
     FirstLevel = 1  # 定义第一次点击侧边的分类为树的1级别，从1级开始才会提取详细的 前100 的item
     SecondLevel = 2
@@ -17,13 +17,27 @@ class TreeLevel(Enum):
     NotExistLevel = -1  # 就是此item 属于（这种爬法会有重复，不过，这样才嫩尽可能的保存一级类别开始的曾经关系）
 
 
+# middleware 的request 类型判断
+class RequestType(Enum):
+    CategoryRequest = 0
+    ItemRequest = 1
+
+
 @dataclass
 class Category:
     name: str  # 这个类的名字
-    tree_level: TreeLevel  # 这个类所在层级
+    level: Level  # 这个类所在层级
 
     def __str__(self):
-        return f"{self.name}_level:{self.tree_level.value}"
+        return f"{self.name}_level:{self.level.value}"
+
+
+# items
+class CategoryPage(scrapy.Item):
+    url = scrapy.Field()
+    level = scrapy.Field()
+    name = scrapy.Field()  # 从 Category中提取
+    page_number = scrapy.Field()  # 只有两页，前100 item
 
 
 # @dataclass
@@ -40,9 +54,5 @@ class Item(scrapy.Item):
         return f"{self['bsr']}:{self['title']}:{self['belongs_category']}"
 
 
-# class AmazonScrapySpiderItem(scrapy.Item):
-#     # define the fields for your item here like:
-#     # name = scrapy.Field()
-#     pass
 if __name__ == '__main__':
-    print(Category("helloo", TreeLevel.FirstLevel))
+    print(Category("helloo", Level.FirstLevel))
