@@ -129,6 +129,14 @@ class amazonSpiderSpider(scrapy.Spider):
                                             f"{category_name}:{len(this_page_items)}")
         # 作为记录，已经够了的就不写入了，后面再进行一轮去重和增量提取
 
+        if level != 3:  # 第三级，最后一级了
+            # 获得右侧 category_url
+            category_url_list = get_right_category_urls(driver)  # 没有就不用下一级了
+            driver.quit()  # 最后才关闭
+        else:
+            category_url_list = []
+            driver.quit() #
+
         for index, (text, url) in enumerate(this_page_items):
             item = Item()
             item['title'] = text
@@ -145,16 +153,13 @@ class amazonSpiderSpider(scrapy.Spider):
         # 提取一下二级的  # 然后提取一下三级的，依次递归了，然后我需要优先深度遍历，这样好一些？
 
         if level != 3:  # 第三级，最后一级了
-            # 获得右侧 category_url
-            category_url_list = get_right_category_urls(driver)  # 没有就不用下一级了
-            driver.quit()  # 最后才关闭
-            print("level:", level, len(category_url_list))
-            for category, url in category_url_list:  # 只测一个主题 todo 没有递归，此处，这是为什么。
-                if not hexists(url, CRAWLED_CATEGORY_KEYS):  # 未提取过item的 category 页面才执行
-                    print("category, url", category, url)
-                    yield scrapy.Request(url=url, callback=self.parse_category1_items,
-                                         meta={'url': url, "category": category,
-                                               "level": level + 1}, dont_filter=True)
-        else:
-            driver.quit()  # 最后才关闭
+            if len(category_url_list) != 0 :
+                print("level:", level, len(category_url_list))
+                for category, url in category_url_list:  # 只测一个主题 todo 没有递归，此处，这是为什么。
+                    if not hexists(url, CRAWLED_CATEGORY_KEYS):  # 未提取过item的 category 页面才执行
+                        print("category, url", category, url)
+                        yield scrapy.Request(url=url, callback=self.parse_category1_items,
+                                             meta={'url': url, "category": category,
+                                                   "level": level + 1}, dont_filter=True)
+
 
