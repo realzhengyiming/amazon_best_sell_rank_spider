@@ -47,16 +47,11 @@ def hexists(field_key, category_keys):
         return False
 
 
+def init_root_url(spider_name, url):
+    r = redis.Redis(connection_pool=redis_pool)
+    r.lpush(f'{spider_name}:start_urls', url)
+    print(f'{spider_name}:start_urls', url, "插入启动种子，开始抓取...")
+
+
 if __name__ == '__main__':
-    # write_error_to_redis("hello world")
-    # write_category_item_number_to_redis("test", 100)
-    # category_dict = get_redis_hash()
-    # category_dict_keys = set([k.decode('utf-8') for k in category_dict])  # 改成写入url把
-    # print(category_dict_keys)
-
-    # print(hexists("test"))
-    #
-    # write_error_to_redis(json.dumps({"url": "test", "level": 1,
-    #                                  "category": "device"}))
-
-    write_item_to_redis("item_url", "item_name")
+    init_root_url("amazon", "https://www.amazon.com/Best-Sellers/zgbs/")

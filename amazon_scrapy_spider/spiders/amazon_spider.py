@@ -1,18 +1,19 @@
 import os
-from dataclasses import asdict
+from typing import List
 from urllib.parse import urljoin
 
 import scrapy
 from scrapy import Selector
+from scrapy_redis.spiders import RedisSpider
 
-from amazon_scrapy_spider.cus_request import RightTabRequest
 from amazon_scrapy_spider.items import Item, Category, Level, RequestType
-from amazon_scrapy_spider.redis_util import hexists
 from amazon_scrapy_spider.selenium_utils import get_base_url
-from config import HEADLESS_MODE, IMAGE_MODE, PROJECT_ROOT, CRAWLED_CATEGORY_KEYS
+from config import PROJECT_ROOT
 
 
-class amazonSpiderSpider(scrapy.Spider):
+# todo 能跑了，下一步就是改成 scrapy-redis
+# class amazonSpiderSpider(scrapy.Spider):
+class amazonSpiderSpider(RedisSpider):
     """
     基于scrapySpider的爬虫模块
 
@@ -31,19 +32,18 @@ class amazonSpiderSpider(scrapy.Spider):
                           'Chrome/64.0.3282.186 Safari/537.36',
         },
         # "LOG_LEVEL": "WARNING",
-        "LOG_LEVEL": "ERROR",
+        "LOG_LEVEL": "INFO",
 
         # 禁用并发请求
-        "CONCURRENT_REQUESTS": 1,  # 默认多少并发，忘记了，直接启动把
-        "CONCURRENT_REQUESTS_PER_DOMAIN": 1,
+        "CONCURRENT_REQUESTS": 2,  # 默认多少并发，忘记了，直接启动把
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 2,
 
         # 设置请求延迟时间为1秒
-        "DOWNLOAD_DELAY": 0.5,
+        "DOWNLOAD_DELAY": 1,
 
         # 设置下载超时时间为3秒
         "DOWNLOAD_TIMEOUT": 5,
 
-        "FEED_FORMAT": 'csv',  # 设置存储格式为 CSV
         "FEED_EXPORT_HEADERS": False,  # 不输出表头
         "DEPTH_PRIORITY": 1,  # 广度优先
 
@@ -52,46 +52,50 @@ class amazonSpiderSpider(scrapy.Spider):
         #     'amazon_scrapy_spider.pipelines.CsvFilePipeline': 300,
         # }
 
+        # scrapy-redis相关的
+        'DUPEFILTER_CLASS': "scrapy_redis.dupefilter.RFPDupeFilter",
+        'SCHEDULER': "scrapy_redis.scheduler.Scheduler",
+        'SCHEDULER_PERSIST': True,
+
+        'ITEM_PIPELINES': {
+            # 'example.pipelines.ExamplePipeline': 300,  # 这个改成我自己的，我需要item吗？需要的，如果要完整的断点续爬
+            'scrapy_redis.pipelines.RedisPipeline': 400,  # 前面过滤了重复，后面的管道就也不要了
+        },
+        'REDIS_URL': "redis://127.0.0.1:6379",
+        # "JOBDIR": "amazon_cache",  # 互相干扰的意思咯
+        # "keep_fragments": True,
+        "DUPEFILTER_KEY": f"{name}:dupefilter",  # 这样才可以吗
+        "REDIS_ENCODING": 'utf-8'
+
     }
-    allowed_domains = ["*"]
+    allowed_domains = ["www.amazon.com"]
     url = "https://www.amazon.com/Best-Sellers/zgbs/"
     base_url = get_base_url(url)
+    # scrapy_redis 相关
+    redis_key = f"{name}:start_urls"
+    max_idle_time = 7
 
-    def start_requests(self):
-        """
-        执行前置任务,完成爬虫初始化队列的生成,代理ip的获取，并启动爬虫。
-        :return:
-        """
-        # 直接这一级就开始
-        category_url = RightTabRequest(self.url, headless=HEADLESS_MODE,
-                                       image_mode=IMAGE_MODE).parse()
-        print("len of category_url", len(category_url))
-        with open(os.path.join(PROJECT_ROOT, "output", "category1_url_table.csv"), "w") as file:
-            for category, url in category_url:
-                file.write(f"{category};{url}")
+    # def start_requests(self):  # todo 还有一个问题，就是0级的问题，可能还需要测试一下
+    #     yield scrapy.Request(url=self.url, callback=self.parse_category_content,
+    #                          meta={'url': self.url, "category": "root",
+    #                                "request_type": RequestType.Root,
+    #                                "level": 0}, dont_filter=True)  # 0 级怎么处理，如果这个要改的话，那要怎么改
 
-        for category, url in category_url:  # 只测一个主题 todo 后面改成 scrapy-redis
-            print("category, url", category, url)
-            if not hexists(url, CRAWLED_CATEGORY_KEYS):  # 未提取过item的 category 页面才执行
-                yield scrapy.Request(url=url, callback=self.parse_category_content,
-                                     meta={'url': url, "category": category,
-                                           "request_type": RequestType.CategoryRequest,
-                                           "level": 1}, dont_filter=True)
-
-    def category_items(self, response):
+    def category_items(self, response) -> List[Item]:
+        current_level = response.meta.get("level")
         xpath = '//*[@id="gridItemRoot"]/div/div[2]/div/a[2]'  # 获取了图片部份的url
         a_tags = Selector(response).xpath(xpath)
         item_urls = [[a.xpath(".//text()").get(), a.xpath("@href").extract_first()] for a in a_tags]
+        item_list = []
         for index, (text, url) in enumerate(item_urls):
             item = Item()
             item['title'] = text
             item['bsr'] = index + 1
             item['url'] = url
-            category = Category(name=response.meta.get("category"), level=Level.FirstLevel)
-            category = asdict(category)
-            item['belongs_category'] = category
-            item['first_level'] = category
-            yield item
+            item['belongs_category'] = response.meta.get("category")
+            item['belongs_level'] = current_level
+            item_list.append(item)
+        return item_list
 
     def _right_sub_category_extract(self, response):
         right_tab_list = Selector(response).xpath('//div[@role="group"]/div')
@@ -107,66 +111,53 @@ class amazonSpiderSpider(scrapy.Spider):
                 category_url_list.append([sub_category_name, url])
         return category_url_list
 
-    def subcategory_extract(self, response):
+    def subcategory_extract(self, response) -> List[scrapy.Request]:
         level = response.meta.get("level")
-        if level != 3:  # 第三级，最后一级了
+        old_category = response.meta.get("category")
+        subcategory_list = []
+        if level != Level.ThirdLevel.value:  # 第三级，最后一级了
             category_url_list = self._right_sub_category_extract(response)  # 没有就不用下一级了
             if len(category_url_list) != 0:
                 print("level:", level, len(category_url_list))
                 for category, url in category_url_list:  # 只测一个主题 todo 没有递归，此处，这是为什么。
                     print("category, url", category, url)
-                    yield scrapy.Request(url=url, callback=self.parse_category_content,
-                                         meta={'url': url, "category": category,
-                                               "level": level + 1, "request_type": RequestType.CategoryRequest},
-                                         dont_filter=True)
+                    scrapy_request = scrapy.Request(url=url, callback=self.parse,
+                                                    meta={'url': url, "category": f"{old_category}/" + category,
+                                                          "level": level + 1,
+                                                          "request_type": RequestType.CategoryRequest},
+                                                    )
+                    subcategory_list.append(scrapy_request)
+        return subcategory_list
 
-    def category_next_page(self, response):
-        meta = response.meat
+    def category_next_page(self, response) -> List[scrapy.Request]:
+        next_list = []
+        meta = response.meta
         # 下一页，next page 有这个直接就可以了
         next_page_url_xpath = '//div[@role="navigation"]/ul/li[@class="a-last"]/a/@href'
         suffix_page_url = Selector(response).xpath(next_page_url_xpath).extract_first()
         if suffix_page_url is not None:
             next_page_url = urljoin(self.base_url, suffix_page_url)
             meta['url'] = next_page_url
-            yield scrapy.Request(url=next_page_url, callback=self.parse_category_content, meta=meta, dont_filter=True)
+            scrapy_request = scrapy.Request(url=next_page_url, callback=self.parse, meta=meta,)
+            next_list.append(scrapy_request)
+        return next_list
 
-    def parse_category_content(self, response):  # category 页面 提取item；翻页category
+    def parse(self, response):  # category 页面 提取item；翻页category
         level = response.meta.get("level")
-        if level != 0:  # 种子，第一个bsr 页面，不提取item
-            xpath = '//*[@id="gridItemRoot"]/div/div[2]/div/a[2]'  # 获取了图片部份的url
-            a_tags = Selector(response).xpath(xpath)
-            item_urls = [[a.xpath(".//text()").get(), a.xpath("@href").extract_first()] for a in a_tags]
-            for index, (text, url) in enumerate(item_urls):
-                item = Item()
-                item['title'] = text
-                item['bsr'] = index + 1
-                item['url'] = url
-                category = Category(name=response.meta.get("category"), level=Level.FirstLevel)
-                category = asdict(category)
-                item['belongs_category'] = category
-                item['first_level'] = category
+        if level != Level.RootLevel.value:  # 种子，第一个bsr 页面，不提取item
+            item_list = self.category_items(response)
+            self.logger.info(f"item_list: level:{level}, item_list:{len(item_list)}")
+            for item in item_list:
                 yield item
-            # self.category_items(response)
 
-        # self.category_next_page(response)
-        meta = response.meat
-        # 下一页，next page 有这个直接就可以了
-        next_page_url_xpath = '//div[@role="navigation"]/ul/li[@class="a-last"]/a/@href'
-        suffix_page_url = Selector(response).xpath(next_page_url_xpath).extract_first()
-        if suffix_page_url is not None:
-            next_page_url = urljoin(self.base_url, suffix_page_url)
-            meta['url'] = next_page_url
-            yield scrapy.Request(url=next_page_url, callback=self.parse_category_content, meta=meta, dont_filter=True)
+        next_page_requests = self.category_next_page(response)
+        self.logger.info(f"next_page: level:{level}, next_page_requests:{len(next_page_requests)}")
+        for next_request in next_page_requests:
+            yield next_request
 
-        # self.subcategory_extract(response)  # 抓取下一级category
-        level = response.meta.get("level")
-        if level != 3:  # 第三级，最后一级了
-            category_url_list = self._right_sub_category_extract(response)  # 没有就不用下一级了
-            if len(category_url_list) != 0:
-                print("level:", level, len(category_url_list))
-                for category, url in category_url_list:  # 只测一个主题 todo 没有递归，此处，这是为什么。
-                    print("category, url", category, url)
-                    yield scrapy.Request(url=url, callback=self.parse_category_content,
-                                         meta={'url': url, "category": category,
-                                               "level": level + 1, "request_type": RequestType.CategoryRequest},
-                                         dont_filter=True)
+        subcategory_list = self.subcategory_extract(response)  # 抓取下一级category
+        for i in subcategory_list:
+            print("subcategory_list", i)
+        self.logger.info(f"subcategory_list: level:{level}, subcategory_list:{len(subcategory_list)}")
+        for subcategory_request in subcategory_list:
+            yield subcategory_request

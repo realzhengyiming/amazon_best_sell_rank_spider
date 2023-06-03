@@ -1,5 +1,6 @@
-pandas==1.3.5
-Scrapy==2.4.0
+redis==4.5.5
+scrapy==2.9.0
+scrapy_redis==0.7.3
 selenium==4.9.1
-webdriver_manager==3.5.1
-selenium-wire
+webdriver_manager==3.8.6
+selenium_wire==5.1.0

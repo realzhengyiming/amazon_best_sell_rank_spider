@@ -6,7 +6,6 @@ from urllib.parse import urlparse
 
 from selenium import webdriver
 from selenium.common import NoSuchElementException
-from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from seleniumwire import webdriver as wire_webdriver  # pip install selenium-wire
@@ -14,7 +13,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 # 改成一个对象来封装也挺好的
 from webdriver_manager.firefox import GeckoDriverManager
 
-from amazon_scrapy_spider.redis_util import hexists
 from config import PROXY_USER, PROXY_PASSWORD, PROXY_PORT, PROXY_HOST, HEADLESS_MODE, IMAGE_MODE, PROJECT_ROOT
 
 # 创建Chrome浏览器对象
@@ -22,16 +20,15 @@ from config import PROXY_USER, PROXY_PASSWORD, PROXY_PORT, PROXY_HOST, HEADLESS_
 RETRY_TIME = 4
 
 
+# @tenacity.retry(stop=tenacity.stop_after_attempt(5), wait=tenacity.wait_fixed(0.8))
 def webdriver_get(driver, url, retry_time=5, wait_time=0.1):
     html_content = '<html><head><meta name="color-scheme" content="light dark"></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;">Request was throttled. Please wait a moment and refresh the page</pre></body></html>'
     # 打开网页
-    # driver.implicitly_wait(wait_time)  # 设置等待时间为10秒
+    driver.implicitly_wait(1)  # 设置等待时间为10秒
     driver.get(url)
-    time.sleep(wait_time)
     for i in range(retry_time):
         if driver.page_source == html_content:
             driver.refresh()
-            time.sleep(wait_time)
         else:
             return driver
     print("重试多次后还是失败了！")  # 会有问题，一级分类已经搞定
@@ -46,47 +43,26 @@ def get_base_url(url):
 
 def scroll_to_buttom(driver, wait_time=1):  # 滚动到底下刷新出来，展开最大的情况，全屏
     old_height = driver.execute_script('return document.body.scrollHeight')
-    while True:
-        # target_element = driver.find_element(By.XPATH, '//*[@id="navBackToTop"]/div')
-        target_element = driver.find_element(By.XPATH, '//*[@id="CardInstancekSYLoSe5-V8mF_nf0bSK6g"]/div/div/a/span')
-        #
-        # 创建 ActionChains 对象
-        actions = ActionChains(driver)
-        # 将鼠标移动到目标元素上
-        actions.move_to_element(target_element)
-        # 对目标元素进行微调
-        actions.move_by_offset(0, -200)
-        # 执行操作
-        actions.pause(wait_time)
-        actions.perform()
+    # 先滚动到最底部
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight - 1000);")
+
+    for i in range(3):
+        target_element = driver.find_element(By.XPATH, '//*[@class="a-pagination"]')
+        driver.execute_script("arguments[0].scrollIntoViewIfNeeded(true);", target_element)
+        time.sleep(1)
+
+    while True:  # 这个滚动的有bug ，不行 todo 数量不够
+        # todo 页面不对也可能报错 try
+        target_element = driver.find_element(By.XPATH, '//*[@class="a-pagination"]')
+        driver.execute_script("arguments[0].scrollIntoViewIfNeeded(true);", target_element)
+        time.sleep(1)
+
         new_height = driver.execute_script('return document.body.scrollHeight')
         if old_height != new_height:
             old_height = new_height
         else:
             break
-
-
-def scroll_full_page(driver, scroll_wait_time: int = 2):
-    # """category 动态加载页面，确保完整加载出页面的所有item"""
-    # try:
-    #     next_page_elm = driver.find_element(By.XPATH, '//div[@role="navigation"]/ul/li[@class="a-last"]')
-    #     next_page_class_attr = next_page_elm.get_attribute("class")
-    # except NoSuchElementException:
-    #     next_page_class_attr = ""
-    #     next_page_elm = None
-
-    scroll_to_buttom(driver, scroll_wait_time)
-    # # 翻页模块
-    # while next_page_class_attr == "a-last" and next_page_elm is not None:
-    #     scroll_to_buttom(driver, scroll_wait_time)
-    #     try:
-    #         next_page_elm = driver.find_element(By.XPATH, '//div[@role="navigation"]/ul/li[@class="a-last"]')
-    #         next_page_class_attr = next_page_elm.get_attribute("class")
-    #         # 更新下一页的标签
-    #     except NoSuchElementException:
-    #         next_page_class_attr = ""
-    # # this_page_items = get_this_level_item_urls(driver)  # 全部翻完了才可以用
-    # # return this_page_items
+    print("结尾这", len(get_this_level_item_urls(driver)))
     return driver
 
 
@@ -109,116 +85,6 @@ def get_this_level_item_urls(driver) -> List[List]:
     a_list = driver.find_elements(By.XPATH, xpath)  # .//a[@class="a-link-normal"]/@href')
     item_urls = [[a.text, a.get_attribute("href")] for a in a_list]
     return item_urls
-
-
-# def create_proxy_chrome():
-#     def create_proxyauth_extension(tunnelhost, tunnelport, proxy_username, proxy_password, scheme='http',
-#                                    plugin_path=None):
-#         """代理认证插件
-#
-#         args:
-#             tunnelhost (str): 你的代理地址或者域名（str类型）
-#             tunnelport (int): 代理端口号（int类型）
-#             proxy_username (str):用户名（字符串）
-#             proxy_password (str): 密码 （字符串）
-#         kwargs:
-#             scheme (str): 代理方式 默认http
-#             plugin_path (str): 扩展的绝对路径
-#
-#         return str -> plugin_path
-#         """
-#
-#         if plugin_path is None:
-#             plugin_path = 'vimm_chrome_proxyauth_plugin.zip'
-#
-#         manifest_json = """
-# 	    {
-# 	        "version": "1.0.0",
-# 	        "manifest_version": 2,
-# 	        "name": "Chrome Proxy",
-# 	        "permissions": [
-# 	            "proxy",
-# 	            "tabs",
-# 	            "unlimitedStorage",
-# 	            "storage",
-# 	            "<all_urls>",
-# 	            "webRequest",
-# 	            "webRequestBlocking"
-# 	        ],
-# 	        "background": {
-# 	            "scripts": ["background.js"]
-# 	        },
-# 	        "minimum_chrome_version":"22.0.0"
-# 	    }
-# 	    """
-#
-#         background_js = string.Template(
-#             """
-#             var config = {
-#                     mode: "fixed_servers",
-#                     rules: {
-#                     singleProxy: {
-#                         scheme: "${scheme}",
-#                         host: "${host}",
-#                         port: parseInt(${port})
-#                     },
-#                     bypassList: ["foobar.com"]
-#                     }
-#                 };
-#
-#             chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
-#
-#             function callbackFn(details) {
-#                 return {
-#                     authCredentials: {
-#                         username: "${username}",
-#                         password: "${password}"
-#                     }
-#                 };
-#             }
-#
-#             chrome.webRequest.onAuthRequired.addListener(
-#                         callbackFn,
-#                         {urls: ["<all_urls>"]},
-#                         ['blocking']
-#             );
-#             """
-#         ).substitute(
-#             host=tunnelhost,
-#             port=tunnelport,
-#             username=proxy_username,
-#             password=proxy_password,
-#             scheme=scheme,
-#         )
-#         with zipfile.ZipFile(plugin_path, 'w') as zp:
-#             zp.writestr("manifest.json", manifest_json)
-#             zp.writestr("background.js", background_js)
-#         return plugin_path
-#
-#     proxyauth_plugin_path = create_proxyauth_extension(
-#         tunnelhost="r847.kdltps.com",  # 隧道域名
-#         tunnelport="15818",  # 端口号
-#         proxy_username="t18533708977798",  # 用户名
-#         proxy_password="ukoaa3t8"  # 密码
-#     )
-#
-#     # chrome_options = webdriver.ChromeOptions()
-#     # chrome_options.add_extension(proxyauth_plugin_path)
-#
-#     # 每次都创建了一个新的
-#     options = webdriver.ChromeOptions()
-#     options.add_argument('--lang=en')
-#     options.add_argument('--headless')
-#
-#     prefs = {
-#         "profile.managed_default_content_settings.images": 2  # 不渲染图片，减少内存占用
-#     }
-#     options.add_experimental_option("prefs", prefs)
-#     options.add_extension(proxyauth_plugin_path)
-#
-#     # driver = webdriver.Chrome(options=options, executable_path=ChromeDriverManager().install())
-#     driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), options=options)
-#     return driver
 
 
 def create_wire_proxy_chrome(headless=HEADLESS_MODE, image_mode=IMAGE_MODE):
@@ -247,7 +113,7 @@ def create_wire_proxy_chrome(headless=HEADLESS_MODE, image_mode=IMAGE_MODE):
 
     driver = wire_webdriver.Chrome(seleniumwire_options=options, executable_path=ChromeDriverManager().install(),
                                    options=options2)
-    driver.header_overrides = {'Accept-Language': 'en-US,en;q=0.9'}  # 设置接收英语
+    driver.header_overrides = {'Accept-Language': 'en-US,en;q=0.9', "referer": "https://www.amazon.com"}  # 设置接收英语
     return driver
 
 
@@ -284,6 +150,7 @@ def set_en_language_cookie(driver):
                        'secure': False, 'value': 'en_US'})
     return driver
 
+
 # def filter_url(url):
 #     if hexists(url, category_keys):
 #         return True
@@ -304,4 +171,3 @@ if __name__ == '__main__':
     url = "https://www.amazon.com/Best-Sellers/zgbs/"
     base_url = get_base_url(url)
     driver = webdriver_get(driver, url)
-
