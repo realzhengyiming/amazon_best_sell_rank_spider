@@ -86,6 +86,15 @@ class amazonSpiderSpider(RedisSpider):
         xpath = '//*[@id="gridItemRoot"]/div/div[2]/div/a[2]'  # 获取了图片部份的url
         a_tags = Selector(response).xpath(xpath)
         item_urls = [[a.xpath(".//text()").get(), a.xpath("@href").extract_first()] for a in a_tags]
+
+        # todo 改，能增加价格的就增加价格
+        for item_box_elm in Selector(response).xpath('//*[@id="gridItemRoot"]/div'):
+            item_price = item_box_elm.xpath(".//*[@class='a-size-base a-color-price']").xpath(".//text()").get()
+            item_title = item_box_elm.xpath(".//a[@class='a-link-normal']").xpath(".//text()").get()
+            item_url = item_box_elm.xpath(".//a[@class='a-link-normal']/@href").get()
+            item_rating_number = item_box_elm.xpath(".//a[@roll=true]/@href").get()
+
+
         item_list = []
         for index, (text, url) in enumerate(item_urls):
             item = Item()

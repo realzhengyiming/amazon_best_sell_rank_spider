@@ -4,7 +4,6 @@ import time
 from typing import List
 from urllib.parse import urlparse
 
-from selenium import webdriver
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
@@ -41,6 +40,7 @@ def get_base_url(url):
     return base_url
 
 
+# 这个是最耗时间的
 def scroll_to_buttom(driver, wait_time=1):  # 滚动到底下刷新出来，展开最大的情况，全屏
     old_height = driver.execute_script('return document.body.scrollHeight')
     # 先滚动到最底部
@@ -87,14 +87,17 @@ def get_this_level_item_urls(driver) -> List[List]:
     return item_urls
 
 
-def create_wire_proxy_chrome(headless=HEADLESS_MODE, image_mode=IMAGE_MODE):
+def create_wire_proxy_chrome(headless=HEADLESS_MODE, image_mode=IMAGE_MODE, page_load_strategy="eager"):
     options = {
         "headless": headless
     }
-    options2 = webdriver.ChromeOptions()
+    options2 = wire_webdriver.ChromeOptions()
     options2.add_argument('--lang=en-US')
     options2.add_argument('--force-country-code=US')
     options2.add_experimental_option('excludeSwitches', ['enable-logging'])
+
+    if page_load_strategy:
+        options2.page_load_strategy = page_load_strategy  # 渲染模式 normal, edger, none
 
     if headless:
         options2.add_argument('--headless')
@@ -158,7 +161,7 @@ def set_en_language_cookie(driver):
 
 
 if __name__ == '__main__':
-    options = webdriver.ChromeOptions()
+    options = wire_webdriver.ChromeOptions()
     options.add_argument('--lang=en')
     options.add_argument('--headless')
 
@@ -166,7 +169,7 @@ if __name__ == '__main__':
         "profile.managed_default_content_settings.images": 2  # 不渲染图片，减少内存占用
     }
     options.add_experimental_option("prefs", prefs)
-    driver = webdriver.Chrome(options=options, executable_path=ChromeDriverManager().install())
+    driver = wire_webdriver.Chrome(options=options, executable_path=ChromeDriverManager().install())
 
     url = "https://www.amazon.com/Best-Sellers/zgbs/"
     base_url = get_base_url(url)
