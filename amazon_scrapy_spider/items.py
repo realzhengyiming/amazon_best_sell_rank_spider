@@ -52,6 +52,8 @@ class Item(scrapy.Item):
     belongs_category = scrapy.Field()  # belongs_category: Category  # 所在类别
     belongs_level = scrapy.Field()
 
+    # price = scrapy.Field() # todo 也可以在此处增加这个，目前发现详情页内不一定可以比较好获得价格的数据，item页面就可以直接提取
+
     def __str__(self):
         return f"{self['bsr']}:{self['title']}:{self['belongs_category']}"
 

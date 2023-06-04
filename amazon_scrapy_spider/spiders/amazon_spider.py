@@ -61,6 +61,8 @@ class amazonSpiderSpider(RedisSpider):
             # 'example.pipelines.ExamplePipeline': 300,  # 这个改成我自己的，我需要item吗？需要的，如果要完整的断点续爬
             'scrapy_redis.pipelines.RedisPipeline': 400,  # 前面过滤了重复，后面的管道就也不要了
         },
+
+
         'REDIS_URL': "redis://127.0.0.1:6379",
         # "JOBDIR": "amazon_cache",  # 互相干扰的意思咯
         # "keep_fragments": True,
