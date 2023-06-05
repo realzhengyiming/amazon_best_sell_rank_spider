@@ -96,8 +96,8 @@ def create_wire_proxy_chrome(headless=HEADLESS_MODE, image_mode=IMAGE_MODE, page
     options2.add_argument('--force-country-code=US')
     options2.add_experimental_option('excludeSwitches', ['enable-logging'])
 
-    if page_load_strategy:
-        options2.page_load_strategy = page_load_strategy  # 渲染模式 normal, edger, none
+    # if page_load_strategy:
+    #     options2.page_load_strategy = page_load_strategy  # 渲染模式 normal, edger, none
 
     if headless:
         options2.add_argument('--headless')

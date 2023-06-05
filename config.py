@@ -10,7 +10,7 @@ PROJECT_ROOT = os.path.dirname(__file__)
 HEADLESS_MODE = bool(int(os.environ.get("HEADLESS_MODE", "0")))
 IMAGE_MODE = bool(int(os.environ.get("HEADLESS_MODE", "0")))
 
-# 可选，记录错误
+# 可选，记录错误/ 新版本没用这几个变量
 ERROR_KEYS = os.environ.get("ERROR_KEYS", "scrapy_error_urls")
 CRAWLED_CATEGORY_KEYS = os.environ.get("CRAWLED_CATEGORY_KEYS", "crawled_category_info")
 CRAWLED_ITEM_KEYS = os.environ.get("CRAWLED_ITEM_KEYS", "crawled_item_info")

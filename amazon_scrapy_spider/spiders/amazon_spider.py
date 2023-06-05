@@ -77,11 +77,6 @@ class amazonSpiderSpider(RedisSpider):
     redis_key = f"{name}:start_urls"
     max_idle_time = 7
 
-    # def start_requests(self):  # todo 还有一个问题，就是0级的问题，可能还需要测试一下
-    #     yield scrapy.Request(url=self.url, callback=self.parse_category_content,
-    #                          meta={'url': self.url, "category": "root",
-    #                                "request_type": RequestType.Root,
-    #                                "level": 0}, dont_filter=True)  # 0 级怎么处理，如果这个要改的话，那要怎么改
 
     def category_items(self, response) -> List[Item]:
         current_level = response.meta.get("level")
@@ -90,13 +85,6 @@ class amazonSpiderSpider(RedisSpider):
         item_urls = [[a.xpath(".//text()").get(), a.xpath("@href").extract_first()] for a in a_tags]
 
         # todo 改，能增加价格的就增加价格
-        for item_box_elm in Selector(response).xpath('//*[@id="gridItemRoot"]/div'):
-            item_price = item_box_elm.xpath(".//*[@class='a-size-base a-color-price']").xpath(".//text()").get()
-            item_title = item_box_elm.xpath(".//a[@class='a-link-normal']").xpath(".//text()").get()
-            item_url = item_box_elm.xpath(".//a[@class='a-link-normal']/@href").get()
-            item_rating_number = item_box_elm.xpath(".//a[@roll=true]/@href").get()
-
-
         item_list = []
         for index, (text, url) in enumerate(item_urls):
             item = Item()
