@@ -9,6 +9,8 @@ pip install -r requirements.txt
 
 ## master node  
 安装好redis，且内存容量需要足够，worker 爬虫的item，request，dupefilter会存储在上面  
+默认爬虫连接localhost 6379 无密码的本地redis，如有需要修改，则到  
+amazon_scrapy_spider/spider/amazon_spider.py内的custom_settings内修改。  
 
 
 # launch

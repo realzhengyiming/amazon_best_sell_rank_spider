@@ -63,7 +63,7 @@ class amazonSpiderSpider(RedisSpider):
         },
 
 
-        'REDIS_URL': "redis://127.0.0.1:6379",
+        'REDIS_URL': "redis://127.0.0.1:6379",  # redis 地址
         # "JOBDIR": "amazon_cache",  # 互相干扰的意思咯
         # "keep_fragments": True,
         "DUPEFILTER_KEY": f"{name}:dupefilter",  # 这样才可以吗
