@@ -31,8 +31,8 @@ class AmazonCategorySpider(RedisSpider):
         "LOG_LEVEL": "INFO",
 
         # 禁用并发请求
-        "CONCURRENT_REQUESTS": 2,  # 默认多少并发，忘记了，直接启动把
-        "CONCURRENT_REQUESTS_PER_DOMAIN": 2,
+        "CONCURRENT_REQUESTS": 2,  # todo 按照实际的情况可以修改此处
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 2,  # todo 按照实际的情况可以修改此处
 
         # 设置请求延迟时间为1秒
         "DOWNLOAD_DELAY": 1,
@@ -158,7 +158,7 @@ class AmazonCategorySpider(RedisSpider):
             category_url_list = self._right_sub_category_extract(response)  # 没有就不用下一级了
             if len(category_url_list) != 0:
                 print("level:", level, len(category_url_list))
-                for category, url in category_url_list:  # 只测一个主题 todo 没有递归，此处，这是为什么。
+                for category, url in category_url_list:
                     print("category, url", category, url)
                     scrapy_request = scrapy.Request(url=url, callback=self.parse,
                                                     meta={'url': url, "category": f"{old_category}/" + category,

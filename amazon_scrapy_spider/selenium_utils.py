@@ -51,8 +51,7 @@ def scroll_to_buttom(driver, wait_time=1):  # 滚动到底下刷新出来，展�
         driver.execute_script("arguments[0].scrollIntoViewIfNeeded(true);", target_element)
         time.sleep(1)
 
-    while True:  # 这个滚动的有bug ，不行 todo 数量不够
-        # todo 页面不对也可能报错 try
+    while True:  # 这个滚动的有bug
         target_element = driver.find_element(By.XPATH, '//*[@class="a-pagination"]')
         driver.execute_script("arguments[0].scrollIntoViewIfNeeded(true);", target_element)
         time.sleep(1)

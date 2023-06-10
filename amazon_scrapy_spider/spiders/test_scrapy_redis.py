@@ -83,7 +83,6 @@ class amazonSpiderSpider(RedisSpider):
         print("正在暂停")
         time.sleep(2)
 
-        # todo redis的item不过滤的，这是为什么
         for i in range(3):
             item = test_item()
             item['url'] = response.request.url
