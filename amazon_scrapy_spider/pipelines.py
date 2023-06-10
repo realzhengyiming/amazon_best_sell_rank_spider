@@ -1,8 +1,13 @@
 import csv
 import os
+from urllib.parse import urljoin
+
+from scrapy_redis.pipelines import RedisPipeline
 
 from amazon_scrapy_spider.items import Item
 from amazon_scrapy_spider.redis_util import write_item_to_redis, hexists
+from amazon_scrapy_spider.spiders.amazon_item_detail_spider import AmazonItemSpider
+from amazon_scrapy_spider.spiders.amazon_spider import AmazonCategorySpider
 from config import CRAWLED_ITEM_KEYS
 
 
@@ -44,3 +49,19 @@ class CsvFilePipeline:
                 write_item_to_redis(unique_code, item_name)
 
             return item
+
+
+class CustomRedisPipeline(RedisPipeline):
+
+    def _process_item(self, item, spider):
+        key = self.item_key(item, spider)
+        data = self.serialize(item)
+        self.server.rpush(key, data)
+        # 增加写入一个新的列表中作为 详情页爬虫的种子提取处
+
+        if "url" in item and item.get("url"):
+            spider_name = AmazonItemSpider.name
+            item_redis_key = f"{spider_name}:start_urls"
+            full_url = urljoin(spider.base_url, item.get("url"))
+            self.server.rpush(item_redis_key, full_url)
+        return item

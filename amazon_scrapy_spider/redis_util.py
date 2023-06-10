@@ -1,4 +1,3 @@
-import json
 from typing import Dict
 
 import redis
@@ -52,6 +51,49 @@ def init_root_url(spider_name, url):
     r.lpush(f'{spider_name}:start_urls', url)
     print(f'{spider_name}:start_urls', url, "插入启动种子，开始抓取...")
 
+def real_items_urls(spider_name):
+    # 创建 Redis 连接
+    r = redis.Redis(connection_pool=redis_pool)
+    # 获取 list 的所有数据
+    list_data = r.lrange(f'{spider_name}:items', 0, -1)
+    # 输出字符串类型的列表
+    str_list = [item.decode() for item in list_data]
+    print(str_list)
+    return str_list
+
+
+def read_batch_redis_data(spider_name):
+    r = redis.Redis(connection_pool=redis_pool)
+
+    # 一次读取的元素数量
+    batch_size = 3000
+
+    redis_list_key = f'{spider_name}:items'
+    # 获取 List 长度
+    list_len = r.llen(redis_list_key)
+
+    # 按批次读取元素
+    for i in range(0, list_len, batch_size):
+        # 计算本批次需要读取的元素范围
+        start = i
+        end = min(i + batch_size - 1, list_len - 1)
+
+        # 读取本批次的元素值
+        batch = r.lrange(redis_list_key, start, end)
+
+        # 处理本批次读取的元素值
+        for value in batch:
+            # 提取item信息，然后写入
+            pass
+    # ...
+
 
 if __name__ == '__main__':
-    init_root_url("amazon", "https://www.amazon.com/Best-Sellers/zgbs/")
+    # init_root_url("amazon", "https://www.amazon.com/Best-Sellers/zgbs/")
+    # result = real_items_urls()
+    # print(result[1])
+    # print(len(result))
+    # print(1)
+    r = redis.Redis(connection_pool=redis_pool)
+
+    r.rpush('mylist', 'hello')

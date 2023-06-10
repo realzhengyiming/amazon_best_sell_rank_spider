@@ -44,16 +44,25 @@ class CategoryPage(scrapy.Item):
     page_number = scrapy.Field()  # 只有两页，前100 item
 
 
-# @dataclass
 class Item(scrapy.Item):
+    asin = scrapy.Field()  # asin: str
     bsr = scrapy.Field()  # 就是对应主题下的排名
     title = scrapy.Field()  # title: str
     url = scrapy.Field()  # url: str
     belongs_category = scrapy.Field()  # belongs_category: Category  # 所在类别
     belongs_level = scrapy.Field()
+    rating = scrapy.Field()
+    price = scrapy.Field()
+    img_url = scrapy.Field()
+    from_url = scrapy.Field()
 
     def __str__(self):
         return f"{self['bsr']}:{self['title']}:{self['belongs_category']}"
+
+
+class DetailItem(scrapy.Item):
+    url = scrapy.Field()  # url: str 这个属性一定需要保留
+    pass  # todo 补充详情页的其他参数和属性 需要解析什么字段，仿照上方的Item
 
 
 if __name__ == '__main__':

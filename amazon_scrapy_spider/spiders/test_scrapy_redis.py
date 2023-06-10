@@ -13,8 +13,6 @@ class test_item(scrapy.Item):
     rank = scrapy.Field()
 
 
-# todo 能跑了，下一步就是改成 scrapy-redis
-# class amazonSpiderSpider(scrapy.Spider):
 class amazonSpiderSpider(RedisSpider):
     """
     基于scrapySpider的爬虫模块

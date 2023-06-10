@@ -84,7 +84,7 @@ class amazonSpiderSpider(scrapy.Spider):
             category_url_list = get_right_category_urls(driver)  # 没有就不用下一级了
             # print("request url", response.request.url)
             print("level:", level, "子主题数量", len(category_url_list))
-            for category, url in category_url_list:  # 只测一个主题 todo 没有递归，此处，这是为什么。
+            for category, url in category_url_list:
                 print("category, url", category, url)
                 result = scrapy.Request(url=url, callback=self.parse_category1_items,
                                         meta={'url': url, "category": category,
