@@ -4,6 +4,8 @@
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 # useful for handling different item types with a single interface
+import os
+import time
 
 import tenacity
 from scrapy.http import HtmlResponse
@@ -13,7 +15,7 @@ from urllib3.exceptions import MaxRetryError
 from amazon_scrapy_spider.items import RequestType
 from amazon_scrapy_spider.selenium_utils import webdriver_get, create_wire_proxy_chrome, create_wire_proxy_firefox, \
     scroll_to_buttom
-from config import PROXY_HOST, PROXY_PORT, PROXY_USER, PROXY_PASSWORD
+from config import PROXY_HOST, PROXY_PORT, PROXY_USER, PROXY_PASSWORD, PROJECT_ROOT
 
 
 # 这两个都是下载中间件
@@ -67,7 +69,6 @@ class ChromeMiddleware(WebMiddleware):
         request.headers['accept-language'] = "en-GB,en;q=0.9"
         request.headers["Connection"] = "close"  # 避免使用隧道道理的时候换ip失败
 
-        request_type = request.meta.get("request_type")
         need_scroll = True
 
         if request.url == spider.url:
@@ -77,9 +78,13 @@ class ChromeMiddleware(WebMiddleware):
                                  "level": 0})  # 如果是root节点的话，记录一下不提取item就可以了
             need_scroll = False
 
+        request_type = request.meta.get("request_type")
+        print("request_type:", request_type, "need_scroll", need_scroll, "timestamp", time.time(), request.url)
         if request_type is RequestType.CategoryRequest or request_type is RequestType.Root:
             try:
                 driver = selenium_and_scroll(request.url, need_scroll)
+                if not driver:
+                    raise Exception("driver 为空")
                 body = driver.page_source
                 response = HtmlResponse(request.url, body=body, encoding='utf-8', request=request)
                 driver.quit()
@@ -105,7 +110,10 @@ class ChromeMiddleware(WebMiddleware):
 
             return None  # 继续执行请求
             # detail item 类型使用代理就可以了，什么也不做，就是使用默认的了
-
+        else:
+            print("第三种情况，检查内容")
+            print("request_type:", request_type, "timestamp", time.time(), request.url)
+            print(request.meta)
 
 class FirfoxMiddleware(object):
     def process_request(self, request, spider):
