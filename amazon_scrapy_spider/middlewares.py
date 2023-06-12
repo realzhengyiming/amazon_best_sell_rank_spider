@@ -30,15 +30,15 @@ class WebMiddleware(object):
         if response.body == html_content:
             # 把失败的写入数据库，或者写入redis中去
             spider.logger.info("重新加入队列，下次重试")
-            return request.replace(dont_filter=True)  # 重新发起请求
+            return request.replace(dont_filter=True, meta=request.meta)
         elif response.status == 403:
             # 如果返回状态码为403，则重新发送该请求
             "Type the characters you see in this image:"
             spider.logger.info("重新加入队列，下次重试")
-            return request.replace(dont_filter=True)
+            return request.replace(dont_filter=True, meta=request.meta)
         elif response.status == 429:
             spider.logger.info("重新加入队列，下次重试")
-            return request.replace(dont_filter=True)  # 这种情况确实是重试,重新发一个请求给 调度器
+            return request.replace(dont_filter=True, meta=request.meta)
         else:
             spider.logger.info("success")
             # 正常的status，直接返回正常的response即可
@@ -69,6 +69,7 @@ class ChromeMiddleware(WebMiddleware):
 
         request_type = request.meta.get("request_type")
         need_scroll = True
+
         if request.url == spider.url:
             # https://www.amazon.com/Best-Sellers/zgbs/
             request.meta.update({'url': request.url, "category": "root",
@@ -82,19 +83,19 @@ class ChromeMiddleware(WebMiddleware):
                 body = driver.page_source
                 response = HtmlResponse(request.url, body=body, encoding='utf-8', request=request)
                 driver.quit()
-                return response  # 不再经过默认的其他 下载中间件，直接给调度器
+                return response  # 不再经过默认的其他 request 下载中间件，直接给调度器
             except MaxRetryError as e:
                 spider.logger.debug("打印中间件错误, 重新提交请求")
                 spider.logger.debug(e)
-                return request.replace(dont_filter=True)
+                return request.replace(dont_filter=True, meta=request.meta)
             except tenacity.RetryError as e:
                 spider.logger.debug("打印中间件错误, 重新提交请求")
                 spider.logger.debug(e)
-                return request.replace(dont_filter=True)
+                return request.replace(dont_filter=True, meta=request.meta)
             except Exception as e:
                 spider.logger.debug("打印中间件错误, 重新提交请求")
                 spider.logger.debug(e)
-                return request.replace(dont_filter=True)
+                return request.replace(dont_filter=True, meta=request.meta)
         elif request_type is RequestType.ItemRequest:
             # 如何代理不为空就，配置代理就可以了
             if PROXY_PASSWORD and PROXY_USER and PROXY_HOST and PROXY_PORT:
@@ -102,7 +103,7 @@ class ChromeMiddleware(WebMiddleware):
                                                                                 "pwd": PROXY_PASSWORD,
                                                                                 "proxy": ':'.join(self._proxy)}
 
-            return None
+            return None  # 继续执行请求
             # detail item 类型使用代理就可以了，什么也不做，就是使用默认的了
 
 
