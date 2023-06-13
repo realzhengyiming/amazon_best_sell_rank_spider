@@ -111,7 +111,7 @@ class ChromeMiddleware(WebMiddleware):
             return None  # 继续执行请求
             # detail item 类型使用代理就可以了，什么也不做，就是使用默认的了
         else:
-            print("第三种情况，检查内容")
+            print("第三种情况，检查内容")  # 更新了这部份检查
             print("request_type:", request_type, "timestamp", time.time(), request.url)
             print(request.meta)
 
