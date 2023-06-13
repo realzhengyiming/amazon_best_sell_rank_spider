@@ -4,18 +4,18 @@
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 # useful for handling different item types with a single interface
-import os
 import time
 
 import tenacity
 from scrapy.http import HtmlResponse
 from selenium.common import NoSuchElementException
+from selenium.webdriver.common.by import By
 from urllib3.exceptions import MaxRetryError
 
 from amazon_scrapy_spider.items import RequestType
 from amazon_scrapy_spider.selenium_utils import webdriver_get, create_wire_proxy_chrome, create_wire_proxy_firefox, \
     scroll_to_buttom
-from config import PROXY_HOST, PROXY_PORT, PROXY_USER, PROXY_PASSWORD, PROJECT_ROOT
+from config import PROXY_HOST, PROXY_PORT, PROXY_USER, PROXY_PASSWORD
 
 
 # 这两个都是下载中间件
@@ -51,13 +51,24 @@ class WebMiddleware(object):
 def selenium_and_scroll(url, need_scroll=True):
     driver = create_wire_proxy_chrome()
     driver = webdriver_get(driver, url, wait_time=0.1)
+    # 能运行出来，说明网页一定渲染正确了
 
+    # 类root category 页面，不抓取item，抓取子category
+    elm = driver.find_elements(By.XPATH, '//*[contains(@class, "a-carousel-row-inner")]')
+    if elm:
+        return driver
+    # 另一种，完全没有item的分类的情况
+    elm = driver.find_elements(By.XPATH, '//*[contains(text(), "Sorry, there are no")]')
+    if elm:
+        return driver
     try:
-        if need_scroll:
-            driver = scroll_to_buttom(driver)
+        driver.find_element(By.XPATH, '//*[@class="a-pagination"]')
+        print("没有找到下一页的元素，此页面不再滚动，url", url)
     except NoSuchElementException:
-        print("没有找到元素，url", url)
-        driver.quit()  # 找不到就关闭， 为的是不造成资源占用
+        return driver  # 没有找到下一页，说明元素太少了，都不用考虑翻页了
+
+    if need_scroll:
+        driver = scroll_to_buttom(driver)
     return driver  # 关闭后为空，返回也会报错，就可以抓到
 
 
@@ -71,7 +82,7 @@ class ChromeMiddleware(WebMiddleware):
 
         need_scroll = True
 
-        if request.url == spider.url:
+        if request.url in spider.root_url_list:
             # https://www.amazon.com/Best-Sellers/zgbs/
             request.meta.update({'url': request.url, "category": "root",
                                  "request_type": RequestType.Root,
@@ -111,9 +122,22 @@ class ChromeMiddleware(WebMiddleware):
             return None  # 继续执行请求
             # detail item 类型使用代理就可以了，什么也不做，就是使用默认的了
         else:
-            print("第三种情况，检查内容")  # 更新了这部份检查
+            print("第三种情况，检查内容")
             print("request_type:", request_type, "timestamp", time.time(), request.url)
             print(request.meta)
+
+
+# 只干一件事，给itemdetail增加对应状态meta
+class ItemDetailMiddleware(WebMiddleware):
+    def process_request(self, request, spider):
+        # 默认使用这个打开详情页
+        useagent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
+        request.headers['user-agent'] = useagent
+        request.headers['accept-language'] = "en-GB,en;q=0.9"
+        request.headers["Connection"] = "close"  # 避免使用隧道道理的时候换ip失败
+
+        request.meta.update({'url': request.url, "request_type": RequestType.ItemRequest})
+
 
 class FirfoxMiddleware(object):
     def process_request(self, request, spider):

@@ -8,11 +8,11 @@ if __name__ == '__main__':
     result = []
     for i in range(1):
         start = time.time()
-        driver = create_wire_proxy_chrome(headless=True, image_mode=False)
+        driver = create_wire_proxy_chrome(headless=False, image_mode=False)
         url = "https://www.amazon.com/Best-Sellers/zgbs/"
 
         url = "https://www.amazon.com/Best-Sellers-Amazon-Devices-Accessories/zgbs/amazon-devices/ref=zg_bs_nav_0"
-
+        url = "https://www.amazon.com/Best-Sellers-Gift-Cards-New-Years/zgbs/gift-cards/2973120011/ref=zg_bs_nav_gift-cards_1"  #  没有下一页的
         driver = webdriver_get(driver, url)
         # driver.get('https://dev.kdlapi.com/testproxy')
         # 获取页面内容

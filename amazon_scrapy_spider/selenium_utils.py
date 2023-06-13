@@ -12,6 +12,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 # 改成一个对象来封装也挺好的
 from webdriver_manager.firefox import GeckoDriverManager
 
+from amazon_scrapy_spider.custom_exception import SeleniumGetPageError
 from config import PROXY_USER, PROXY_PASSWORD, PROXY_PORT, PROXY_HOST, HEADLESS_MODE, IMAGE_MODE, PROJECT_ROOT
 
 # 创建Chrome浏览器对象
@@ -30,7 +31,10 @@ def webdriver_get(driver, url, retry_time=5, wait_time=0.1):
             driver.refresh()
         else:
             return driver
-    print("重试多次后还是失败了！")  # 会有问题，一级分类已经搞定
+    if html_content == driver.page_source:
+        driver.quit()  # 异常的话就关闭浏览器，把request重新提交入队列
+        print("重试多次后还是失败了！")
+        raise SeleniumGetPageError
     return driver
 
 

@@ -66,6 +66,11 @@ class AmazonCategorySpider(RedisSpider):
     }
     allowed_domains = ["www.amazon.com"]
     url = "https://www.amazon.com/Best-Sellers/zgbs/"
+
+    # todo 两个类型的种子，作为判断用，加入到redis中的种子必须和这儿的保持一致
+    root_url_list = ["https://www.amazon.com/Best-Sellers/zgbs/",
+                     "https://www.amazon.com/gp/new-releases/ref=zg_bs_tab"]
+
     base_url = get_base_url(url)
     # scrapy_redis 相关
     redis_key = f"{name}:start_urls"
@@ -112,6 +117,7 @@ class AmazonCategorySpider(RedisSpider):
 
             num_div = len(other_info.xpath("./div"))
             rate = None
+            rate_people_num = None
             price = None
             for i in range(num_div):
                 data = other_info.xpath("./div[{}]//text()".format(i + 1)).get()
@@ -119,6 +125,7 @@ class AmazonCategorySpider(RedisSpider):
                     continue
                 if "out of" in data:
                     rate = data
+                    rate_people_num = other_info.xpath("./div[{}]/div/a/span//text()".format(i + 1)).get()
                 elif "$" in data:
                     price = data
                 elif "from" in data:
@@ -127,9 +134,10 @@ class AmazonCategorySpider(RedisSpider):
                         price = new_data
 
             # NOTE(chun): 这里确实会有price是None的
-            if price is not None and "$" not in price:
-                import pdb; pdb.set_trace()
+            # if price is not None and "$" not in price:
+            #     import pdb; pdb.set_trace()
             item['rating'] = rate
+            item['rating_people_num'] = rate_people_num
             item['price'] = price
             item['img_url'] = other_info.xpath('.//img/@src').get()
             item['from_url'] = response.url
@@ -177,7 +185,7 @@ class AmazonCategorySpider(RedisSpider):
         if suffix_page_url is not None:
             next_page_url = urljoin(self.base_url, suffix_page_url)
             meta['url'] = next_page_url
-            scrapy_request = scrapy.Request(url=next_page_url, callback=self.parse, meta=meta,)
+            scrapy_request = scrapy.Request(url=next_page_url, callback=self.parse, meta=meta, )
             next_list.append(scrapy_request)
         return next_list
 

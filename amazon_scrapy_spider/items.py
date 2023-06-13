@@ -52,6 +52,7 @@ class Item(scrapy.Item):
     belongs_category = scrapy.Field()  # belongs_category: Category  # 所在类别
     belongs_level = scrapy.Field()
     rating = scrapy.Field()
+    rating_people_num = scrapy.Field()
     price = scrapy.Field()
     img_url = scrapy.Field()
     from_url = scrapy.Field()

@@ -17,6 +17,7 @@ class AmazonItemSpider(RedisSpider):
     name = "amazon_item_detail"  # 不要修改此爬虫名字，CustomRedisPipeline 中会读取此爬虫的名字
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES': {
+            'amazon_scrapy_spider.middlewares.ItemDetailMiddleware': 300,  # 增加request 类型的中间件
             'amazon_scrapy_spider.middlewares.ChromeMiddleware': 400,  # 自定义的爬虫下载中间件
         },
         'DEFAULT_REQUEST_HEADERS': {
