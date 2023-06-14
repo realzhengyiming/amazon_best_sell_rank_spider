@@ -1,6 +1,14 @@
 # amazon scrapy spider  
 目前亚马逊bsr多级爬虫的方案，selenium + scrapy_redis + proxy ip 解决反爬的问题。  
 
+## 项目爬虫  
+此项目一共有四个爬虫，分为两组：  
++ bsr category爬虫+bsr item detail爬虫  
+  
++ new release category 爬虫 + new release item detail 爬虫  
+
+为一组的爬虫是相互以来的关系，item detail爬虫的url种子依赖于前面的category爬虫，两组相互独立，存储数据到redis也存储在不同的表
+
 # required  
 ## worker node (python env)  
 conda create -n amazon_spider python=3.10  
@@ -13,11 +21,12 @@ pip install -r requirements.txt
 amazon_scrapy_spider/spider/amazon_spider.py内的custom_settings内修改。  
 
 
-# launch
+# launch  
+## 启动bsr 的category 爬虫和 item detail的方法  
 1. 配置好spider 内的redis地址  
 test_scrapy_spider/amazon_scrapy_spider/spiders/amazon_spider.py  
 
-2. 给redis写入分布式爬虫启动的种子目录（第一次启动的时候）
+2. 给redis写入分布式爬虫启动的种子目录（第一次启动的时候）,这个种子是写死的，和下载中间件里面对应上，连后面的 / 都不能少。  
 lpush amazon:start_urls https://www.amazon.com/Best-Sellers/zgbs/  
 
 
@@ -34,6 +43,7 @@ scrapy crawl amazon
 
 4.物品详情页的爬虫也是相对独立的，依然是分布式结构，统一从redis中获得队列  
 启动方法：  
+如果不使用代理，可以不配置代理，则爬虫不走代理  
 export PROXY_HOST=your_proxy_host  
 export PROTY_PORT=your_proxy_port  
 export PROXY_USERNAME=your_username  
@@ -41,6 +51,38 @@ export PROXY_PASSWORD=your_password
    
 cd test_scrapy_spider  
 scrapy crawl amazon_item_detail 
+
+## 启动 new release的category 爬虫 和 new release item detail爬虫的方法  
+1. 配置好spider 内的redis地址  
+test_scrapy_spider/amazon_scrapy_spider/spiders/amazon_spider_new_release.py  
+
+2. 给redis写入分布式爬虫启动的种子目录（第一次启动的时候）,这个种子是写死的，和下载中间件里面对应上，建议直接复制readme的  
+lpush amazon_new_relase:start_urls https://www.amazon.com/gp/new-releases/ref=zg_bs_tab   
+
+
+3. 配置好worker环境，启动worker爬虫  
+// 不配置这个的话，默认就不使用代理
+export PROXY_HOST=your_proxy_host  
+export PROTY_PORT=your_proxy_port  
+export PROXY_USERNAME=your_username  
+export PROXY_PASSWORD=your_password  
+   
+cd test_scrapy_spider  
+scrapy crawl amazon_new_relase  
+
+
+4.物品详情页的爬虫也是相对独立的，依然是分布式结构，统一从redis中获得队列  
+启动方法：  
+如果不使用代理，可以不配置代理，则爬虫不走代理  
+export PROXY_HOST=your_proxy_host  
+export PROTY_PORT=your_proxy_port  
+export PROXY_USERNAME=your_username  
+export PROXY_PASSWORD=your_password  
+   
+cd test_scrapy_spider  
+scrapy crawl amazon_new_release_item_detail 
+
+
 
 # note  
 目前，您的分布式爬虫方案中，每次从 Redis 中取出种子 URL 开始进行抓取任务。当需要停止某个 worker 时，可以通过在命令行中使用 CTRL+C 捕获 SIGINT 信号来优雅地终止 spider 进程。这样，爬虫会消耗完当前的请求，自动保存进度，并等待状态优雅地保存结束后再退出。如果在此过程中强制关闭（例如快速两次 CTRL+C 或者其他方式杀死进程），就会导致尚未完成的请求丢失，进而造成数据遗漏。
