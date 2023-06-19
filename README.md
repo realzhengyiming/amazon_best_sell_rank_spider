@@ -80,8 +80,11 @@ export PROXY_USERNAME=your_username
 export PROXY_PASSWORD=your_password  
    
 cd test_scrapy_spider  
-scrapy crawl amazon_new_release_item_detail 
+scrapy crawl amazon_new_release_item_detail   
 
+# 特殊情况的启动方式  
+比如发现由于强行中断导致的丢失request的情况，请构修改并且构造 tool/add_request_to_queue.py 的 main。  
+按照main的例子逐个构造请求，写入redis队列，重新启动爬虫，就可以了。  
 
 
 # note  

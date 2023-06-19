@@ -146,6 +146,10 @@ class AmazonCategorySpider(RedisSpider):
 
     def _right_sub_category_extract(self, response):
         right_tab_list = Selector(response).xpath('//div[@role="group"]/div')
+        last_sub_category = not all([i.xpath(".//a").get() for i in right_tab_list])  # 如果不是全都有链接，那就是最底层的类别了，这时候不需要再找侧边
+        if last_sub_category:
+            print("最底层的类别了，不需要再提取右边类别")
+            return []
         category_url_list = []
         for i in right_tab_list:
             sub_category_name = "".join(i.xpath(".//text()").getall())
@@ -162,18 +166,17 @@ class AmazonCategorySpider(RedisSpider):
         level = response.meta.get("level")
         old_category = response.meta.get("category")
         subcategory_list = []
-        if level != Level.ThirdLevel.value:  # 第三级，最后一级了
-            category_url_list = self._right_sub_category_extract(response)  # 没有就不用下一级了
-            if len(category_url_list) != 0:
-                print("level:", level, len(category_url_list))
-                for category, url in category_url_list:
-                    print("category, url", category, url)
-                    scrapy_request = scrapy.Request(url=url, callback=self.parse,
-                                                    meta={'url': url, "category": f"{old_category}/" + category,
-                                                          "level": level + 1,
-                                                          "request_type": RequestType.CategoryRequest},
-                                                    )
-                    subcategory_list.append(scrapy_request)
+        category_url_list = self._right_sub_category_extract(response)  # 没有就不用下一级了
+        if len(category_url_list) != 0:
+            print("level:", level, len(category_url_list))
+            for category, url in category_url_list:
+                print("category, url", category, url)
+                scrapy_request = scrapy.Request(url=url, callback=self.parse,
+                                                meta={'url': url, "category": f"{old_category}/" + category,
+                                                      "level": level + 1,
+                                                      "request_type": RequestType.CategoryRequest},
+                                                )
+                subcategory_list.append(scrapy_request)
         return subcategory_list
 
     def category_next_page(self, response) -> List[scrapy.Request]:
