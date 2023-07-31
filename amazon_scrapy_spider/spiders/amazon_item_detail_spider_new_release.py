@@ -58,7 +58,9 @@ class AmazonNewReleaseItemSpider(AmazonItemSpider):
         'REDIS_URL': "redis://127.0.0.1:6379",  # redis 地址
         # "keep_fragments": True,
         "DUPEFILTER_KEY": f"{name}:dupefilter",  # 检查重复的
-        "REDIS_ENCODING": 'utf-8'
+        "REDIS_ENCODING": 'utf-8',
+        "COOKIES_ENABLED": True
+
     }
 
     allowed_domains = ["www.amazon.com"]
@@ -67,5 +69,7 @@ class AmazonNewReleaseItemSpider(AmazonItemSpider):
     # scrapy_redis 相关
     redis_key = f"{name}:start_urls"
     max_idle_time = 7  # 7s内如果redis中没有取到url就停止爬虫
+    root_url_list = ["https://www.amazon.com/Best-Sellers/zgbs/",
+                     "https://www.amazon.com/gp/new-releases/ref=zg_bs_tab"]
 
     # 直接继承 详情爬虫，不用再实现 解析

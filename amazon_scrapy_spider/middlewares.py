@@ -120,6 +120,21 @@ class ChromeMiddleware(WebMiddleware):
                                                                                 "proxy": ':'.join(self._proxy)}
 
             return None  # 继续执行请求
+            # request.meta.update({'url': request.url, "request_type": RequestType.ItemRequest})
+            # need_scroll = False
+            # try:
+            #     driver = selenium_and_scroll(request.url, need_scroll)
+            #     if not driver:
+            #         raise Exception("driver 为空")
+            #     body = driver.page_source
+            #     response = HtmlResponse(request.url, body=body, encoding='utf-8', request=request)
+            #     driver.quit()
+            #
+            #     return response  # 不再经过默认的其他 request 下载中间件，直接给调度器
+            # except Exception as e:
+            #     spider.logger.debug("打印中间件错误, 重新提交请求")
+            #     spider.logger.debug(e)
+            #     return request.replace(dont_filter=True, meta=request.meta)
             # detail item 类型使用代理就可以了，什么也不做，就是使用默认的了
         else:
             print("第三种情况，检查内容")
@@ -136,7 +151,15 @@ class ItemDetailMiddleware(WebMiddleware):
         request.headers['accept-language'] = "en-GB,en;q=0.9"
         request.headers["Connection"] = "close"  # 避免使用隧道道理的时候换ip失败
 
+        # 选择配送到美国
+        cookies = {'session-id': '358-3585930-8682529',
+                   'i18n-prefs': 'USD',
+                   'ubid-acbsg': '356-8914296-9168616'}
+        # request.cookies = cookies
+        request.cookies = cookies
         request.meta.update({'url': request.url, "request_type": RequestType.ItemRequest})
+
+        return None
 
 
 class FirfoxMiddleware(object):
