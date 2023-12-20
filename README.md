@@ -3,9 +3,10 @@
 
 ## 项目爬虫  
 此项目一共有四个爬虫，分为两组：  
-+ bsr category爬虫+bsr item detail爬虫  
-  
-+ new release category 爬虫 + new release item detail 爬虫  
++ bsr category爬虫  
++ bsr item detail爬虫  
++ new release category 爬虫 
++ new release item detail 爬虫  
 
 为一组的爬虫是相互以来的关系，item detail爬虫的url种子依赖于前面的category爬虫，两组相互独立，存储数据到redis也存储在不同的表
 
@@ -16,14 +17,13 @@ conda activate amazon_spider
 pip install -r requirements.txt  
 
 ## master node  
-安装好redis，且内存容量需要足够，worker 爬虫的item，request，dupefilter会存储在上面  
-默认爬虫连接localhost 6379 无密码的本地redis，如有需要修改，则到  
-amazon_scrapy_spider/spider/amazon_spider.py内的custom_settings内修改。  
+安装好redis，且内存容量需要足够，worker 爬虫的item，request，dupefilter会存储在redis数据库内，
+默认爬虫连接localhost 6379 无密码的本地redis，如有需要修改，则到`amazon_scrapy_spider/spider/amazon_spider.py`内的custom_settings内修改。  
 
 
 # launch  
 ## 启动bsr 的category 爬虫和 item detail的方法  
-1. 配置好spider 内的redis地址  
+1. 配置好spider内的redis地址  
 test_scrapy_spider/amazon_scrapy_spider/spiders/amazon_spider.py  
 
 2. 给redis写入分布式爬虫启动的种子目录（第一次启动的时候）,这个种子是写死的，和下载中间件里面对应上，连后面的 / 都不能少。  
@@ -94,4 +94,4 @@ scrapy crawl amazon_new_release_item_detail
 对于多级分类（多叉树结构）的情况，如果遗漏了 root 请求、某个分支的父节点或者一些后续子节点，可能会导致整棵树的部分数据无法获取。考虑到这一点，建议在终止爬虫，特别是在一个 worker 要停止工作时，务必ctrl + c 一次，然后等候爬虫把 URL 和相应的状态存储到 Redis 中，以防数据丢失。这样即使有 worker 异常终止，也能够保留已经完成的任务进度，方便下一次重启后继续进行数据采集。
 
 # 还未做的事情  
-详情页解析还没做，不过难度响度小一些，只需要完善解析的部分就可以了  
+优化目前的代理ip请求防止封禁的方案，减少运行成本/切换更性价比的套餐
