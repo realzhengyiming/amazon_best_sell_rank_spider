@@ -51,6 +51,7 @@ def init_root_url(spider_name, url):
     r.lpush(f'{spider_name}:start_urls', url)
     print(f'{spider_name}:start_urls', url, "插入启动种子，开始抓取...")
 
+
 def real_items_urls(spider_name):
     # 创建 Redis 连接
     r = redis.Redis(connection_pool=redis_pool)
