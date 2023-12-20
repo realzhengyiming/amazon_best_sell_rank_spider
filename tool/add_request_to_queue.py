@@ -1,4 +1,7 @@
-# 把丢失的 request 加入 redis 队列中去
+"""
+此代码用于将丢失的品类节点添加进爬虫待爬取的列表中。或用于只提取某个品类下的所有子品类的top100商品（因为类别的节点是树展开的形式）
+手动修改main函数中的 品类目录地址，然后启动即可加入redis中，下次启动爬虫项目的时候就会读取到这个队列信息，并且开始爬取。
+"""
 import redis
 from scrapy import Request, Spider
 from scrapy_redis import picklecompat
@@ -24,7 +27,7 @@ def _encode_request(spider_class, request):
     return picklecompat.dumps(obj)
 
 
-def add_request_to_redis_queue(spider_class, request):
+def add_category_request_to_redis_queue(spider_class, request):
     r = redis.Redis(connection_pool=redis_pool)
     encoding_request = _encode_request(spider_class, request)
     score = request.priority  # 0 就是最高优先级
@@ -45,7 +48,8 @@ def package_request(url, meta, spider_class: Spider):
 
 
 if __name__ == '__main__':
-    # example 这个只能逐个添加，因为不同的request不同，多个就只能多个添加
+    # example 这个只能逐个添加，因为不同的request不同，多个就只能多个添加; 不启动爬虫，实际只是添加了一个request队列进入redis，下次
+    # 启动爬虫就可以从redis中读取队列信息，开始爬取这个
 
     url = "https://www.amazon.com/Best-Sellers-Baby/zgbs/baby-products/ref=zg_bs_nav_0"
     spider_instance = SPIDER_TYPE_MAPPING.get("AmazonCategorySpider")
@@ -57,7 +61,7 @@ if __name__ == '__main__':
                               spider_class=spider_instance,
                               )
     print(request.priority)
-    add_request_to_redis_queue(spider_instance, request)
+    add_category_request_to_redis_queue(spider_instance, request)
 
     # 同时，把对应爬虫的 redis中的 dupefilter 删除，如果确定这一级往后都是没爬过的话  redis 中
     # 爬虫名：dupefilter ，例如 amazon:dupefilter

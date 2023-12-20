@@ -19,7 +19,7 @@ pip install -r requirements.txt
 ## master node  
 安装好redis，且内存容量需要足够，worker 爬虫的item，request，dupefilter会存储在redis数据库内，
 默认爬虫连接localhost 6379 无密码的本地redis，如有需要修改，则到`amazon_scrapy_spider/spider/amazon_spider.py`内的custom_settings内修改。  
-
+(此代码测试时候直接用docker启的redis服务)
 
 # launch  
 ## 启动bsr 的category 爬虫和 item detail的方法  
@@ -85,8 +85,6 @@ scrapy crawl amazon_new_release_item_detail
 # 特殊情况的启动方式  
 比如发现由于强行中断导致的丢失request的情况，请构修改并且构造 tool/add_request_to_queue.py 的 main。  
 按照main的例子逐个构造请求，写入redis队列，重新启动爬虫，就可以了。  
-
-
 
 # note  
 目前，您的分布式爬虫方案中，每次从 Redis 中取出种子 URL 开始进行抓取任务。当需要停止某个 worker 时，可以通过在命令行中使用 CTRL+C 捕获 SIGINT 信号来优雅地终止 spider 进程。这样，爬虫会消耗完当前的请求，自动保存进度，并等待状态优雅地保存结束后再退出。如果在此过程中强制关闭（例如快速两次 CTRL+C 或者其他方式杀死进程），就会导致尚未完成的请求丢失，进而造成数据遗漏。
